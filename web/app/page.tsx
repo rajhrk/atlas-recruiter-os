@@ -1,27 +1,64 @@
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
+import DashboardCard from "./components/DashboardCard";
+import QuickActions from "./components/QuickActions";
+
 export default function Home() {
   return (
-    <main
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        background: "#0f172a",
-        color: "white",
-        fontFamily: "Arial",
-      }}
-    >
-      <div style={{ textAlign: "center" }}>
-        <h1 style={{ fontSize: "48px", marginBottom: "20px" }}>
-          🚀 Atlas Recruiter OS
-        </h1>
+    <div className="flex min-h-screen bg-slate-100">
+      {/* Sidebar */}
+      <Sidebar />
 
-        <h2>Version 0.1</h2>
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col">
+        <Header />
 
-        <p>The Recruiter Intelligence Platform</p>
+        <main className="flex-1 p-8">
+          <h2 className="mb-2 text-3xl font-bold text-slate-800">
+            Welcome back, Raj 👋
+          </h2>
 
-        <p>Built by Raj & ChatGPT</p>
+          <p className="mb-8 text-slate-600">
+            Here's a quick overview of your Atlas Recruiter OS.
+          </p>
+
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* Left Side */}
+            <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                <DashboardCard
+                  title="Companies"
+                  value="245"
+                  icon="🏢"
+                />
+
+                <DashboardCard
+                  title="Skills"
+                  value="520"
+                  icon="🧠"
+                />
+
+                <DashboardCard
+                  title="Certifications"
+                  value="84"
+                  icon="🎓"
+                />
+
+                <DashboardCard
+                  title="Conferences"
+                  value="37"
+                  icon="📅"
+                />
+              </div>
+            </div>
+
+            {/* Right Side */}
+            <div>
+              <QuickActions />
+            </div>
+          </div>
+        </main>
       </div>
-    </main>
+    </div>
   );
 }
