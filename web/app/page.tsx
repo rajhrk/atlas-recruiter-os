@@ -1,7 +1,7 @@
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
-import DashboardCard from "./components/DashboardCard";
-import QuickActions from "./components/QuickActions";
+import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
+import DashboardCard from "@/components/dashboard/DashboardCard";
+import QuickActions from "@/components/dashboard/QuickActions";
 
 export default function Home() {
   return (
@@ -23,7 +23,7 @@ export default function Home() {
           </p>
 
           <div className="grid gap-8 lg:grid-cols-3">
-            {/* Left Side */}
+            {/* Dashboard Cards */}
             <div className="lg:col-span-2">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                 <DashboardCard
@@ -52,7 +52,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Side */}
+            {/* Quick Actions */}
             <div>
               <QuickActions />
             </div>
