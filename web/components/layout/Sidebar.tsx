@@ -1,66 +1,111 @@
-import {
-  LayoutDashboard,
-  Search,
-  Building2,
-  Brain,
-  GraduationCap,
-  CalendarDays,
-  Settings,
-} from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard" },
-  { icon: Search, label: "Recruiter Search" },
-  { icon: Building2, label: "Companies" },
-  { icon: Brain, label: "Skills" },
-  { icon: GraduationCap, label: "Certifications" },
-  { icon: CalendarDays, label: "Conferences" },
+  {
+    title: "Dashboard",
+    href: "/",
+    icon: "🏠",
+  },
+  {
+    title: "Recruiter Search",
+    href: "/recruiter-search",
+    icon: "🔍",
+  },
+  {
+    title: "Role Intelligence",
+    href: "/role-intelligence",
+    icon: "👤",
+  },
+  {
+    title: "Company Intelligence",
+    href: "/company-intelligence",
+    icon: "🏢",
+  },
+  {
+    title: "Skills Intelligence",
+    href: "/skills-intelligence",
+    icon: "🧠",
+  },
+  {
+    title: "Certification Intelligence",
+    href: "/certification-intelligence",
+    icon: "🎓",
+  },
+  {
+    title: "Boolean Builder",
+    href: "/boolean-builder",
+    icon: "🧩",
+  },
+  {
+    title: "AI Prompt Builder",
+    href: "/ai-prompts",
+    icon: "✨",
+  },
+  {
+    title: "AI Recruiter Copilot",
+    href: "/ai-recruiter-copilot",
+    icon: "🤖",
+  },
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
   return (
-    <aside className="flex h-screen w-72 flex-col bg-slate-900 text-white">
+    <aside className="w-72 min-h-screen border-r bg-white p-6 flex flex-col">
 
       {/* Logo */}
-      <div className="border-b border-slate-800 p-6">
-        <h1 className="text-2xl font-bold text-blue-400">
-          Atlas
+      <div className="mb-10">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Atlas Recruiter OS
         </h1>
 
-        <p className="mt-1 text-sm text-slate-400">
-          Recruiter OS
+        <p className="mt-1 text-sm text-muted-foreground">
+          Talent Intelligence Platform
         </p>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6">
-
+      <nav className="flex-1 space-y-2">
         {menuItems.map((item) => {
-          const Icon = item.icon;
+          const active =
+            pathname === item.href ||
+            (item.href !== "/" && pathname.startsWith(item.href));
 
           return (
-            <button
-              key={item.label}
-              className="mb-2 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition hover:bg-slate-800"
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all ${
+                active
+                  ? "bg-slate-900 text-white shadow"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+              }`}
             >
-              <Icon size={20} />
+              <span className="text-lg">{item.icon}</span>
 
-              <span>{item.label}</span>
-            </button>
+              <span className="font-medium">
+                {item.title}
+              </span>
+            </Link>
           );
         })}
-
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-slate-800 p-4">
+      <div className="border-t pt-4 text-xs text-muted-foreground">
+        <div className="font-semibold">
+          Atlas Recruiter OS
+        </div>
 
-        <button className="flex w-full items-center gap-3 rounded-lg px-4 py-3 transition hover:bg-slate-800">
-          <Settings size={20} />
+        <div>Version 1.0</div>
 
-          <span>Settings</span>
-        </button>
-
+        <div className="mt-2">
+          Built with Next.js 16
+        </div>
       </div>
 
     </aside>
