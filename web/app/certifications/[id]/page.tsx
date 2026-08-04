@@ -11,25 +11,32 @@ import BadgeLink from "@/components/recruiter/BadgeLink";
 import CopyButton from "@/components/recruiter/CopyButton";
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function CertificationPage({
+export default async function CertificationPage({
   params,
 }: Props) {
-  const certificationName = decodeURIComponent(params.id);
+  const { id } = await params;
 
-  const certification = atlasCertifications.find(
-    (c) =>
-      c.certification.toLowerCase() ===
-      certificationName.toLowerCase()
+  const certificationName = decodeURIComponent(id);
+
+const search = certificationName.toLowerCase();
+
+const certification = atlasCertifications.find((c) => {
+  const name = c.certification.toLowerCase();
+
+  return (
+    name === search ||
+    name.includes(`(${search})`)
   );
+});
 
-  if (!certification) {
-    notFound();
-  }
+if (!certification) {
+  notFound();
+}
 
   const relatedRoles = atlasRoles.filter((role) =>
     role.certifications.some(
@@ -113,9 +120,7 @@ export default function CertificationPage({
             <BadgeLink
               key={role.roleId}
               label={role.role}
-              href={`/recruiter?role=${encodeURIComponent(
-                role.role
-              )}`}
+              href={`/role/${encodeURIComponent(role.role)}`}
             />
           ))}
         </div>

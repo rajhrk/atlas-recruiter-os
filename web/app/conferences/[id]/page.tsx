@@ -9,15 +9,17 @@ import BadgeLink from "@/components/recruiter/BadgeLink";
 import CopyButton from "@/components/recruiter/CopyButton";
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ConferencePage({
+export default async function ConferencePage({
   params,
 }: Props) {
-  const conference = decodeURIComponent(params.id);
+  const { id } = await params;
+
+  const conference = decodeURIComponent(id);
 
   const relatedRoles = atlasRoles.filter((role) =>
     role.conferences.some(

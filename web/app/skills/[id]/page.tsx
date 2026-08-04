@@ -11,17 +11,18 @@ import BadgeLink from "@/components/recruiter/BadgeLink";
 import CopyButton from "@/components/recruiter/CopyButton";
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function SkillPage({ params }: Props) {
-  const skillName = decodeURIComponent(params.id);
+export default async function SkillPage({ params }: Props) {
+  const { id } = await params;
+
+  const skillName = decodeURIComponent(id);
 
   const skill = atlasSkills.find(
-    (s) =>
-      s.skill.toLowerCase() === skillName.toLowerCase()
+    (s) => s.skill.toLowerCase() === skillName.toLowerCase()
   );
 
   if (!skill) {
@@ -46,6 +47,7 @@ export default function SkillPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-8">
+
       <header className="rounded-2xl border bg-white p-8 shadow-sm">
         <h1 className="text-4xl font-bold">
           {skill.skill}
@@ -88,9 +90,7 @@ export default function SkillPage({ params }: Props) {
             <BadgeLink
               key={role.roleId}
               label={role.role}
-              href={`/recruiter?role=${encodeURIComponent(
-                role.role
-              )}`}
+              href={`/role/${encodeURIComponent(role.role)}`}
             />
           ))}
         </div>
@@ -150,6 +150,7 @@ export default function SkillPage({ params }: Props) {
           <li>Prioritise candidates with multiple critical infrastructure skills.</li>
         </ul>
       </Section>
+
     </div>
   );
 }
