@@ -1,5 +1,5 @@
 import { SearchResult } from "@/types/search";
-
+import { getAllKnowledgeTopics } from "@/data/recruiterKnowledge";
 import { getAllCompanies } from "@/lib/atlas/companyService";
 import { atlasRoles } from "@/data/atlas/roles";
 import { atlasSkills } from "@/data/atlas/skills";
@@ -49,7 +49,7 @@ export function searchAtlas(query: string): SearchResult[] {
         title: skill.skill,
         subtitle: "Skill",
         type: "skill",
-        href: `/skills-intelligence?skill=${encodeURIComponent(skill.skill)}`,
+       href: `/skills/${encodeURIComponent(skill.skill)}`,
       });
     }
   });
@@ -62,12 +62,26 @@ export function searchAtlas(query: string): SearchResult[] {
   title: cert.certification,
   subtitle: cert.issuingOrganization,
   type: "certification",
-  href: `/certification-intelligence?certification=${encodeURIComponent(
-    cert.certification
-  )}`,
+ href: `/certifications/${encodeURIComponent(
+  cert.certification
+)}`,
 });
     }
   });
-
+// Recruiter Knowledge
+getAllKnowledgeTopics().forEach((topic) => {
+  if (
+    topic.title.toLowerCase().includes(q) ||
+    topic.id.toLowerCase().includes(q)
+  ) {
+    results.push({
+      id: topic.id,
+      title: topic.title,
+      subtitle: topic.category,
+      type: "knowledge",
+      href: `/recruiter-knowledge/${topic.id}`,
+    });
+  }
+});
   return results.sort((a, b) => a.title.localeCompare(b.title));
 }

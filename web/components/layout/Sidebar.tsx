@@ -35,6 +35,11 @@ const menuItems = [
     icon: "🎓",
   },
   {
+  title: "Recruiter Knowledge",
+  href: "/recruiter-knowledge",
+  icon: "📚",
+},
+  {
     title: "Boolean Builder",
     href: "/boolean-builder",
     icon: "🧩",

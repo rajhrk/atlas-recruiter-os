@@ -2,7 +2,8 @@ export type SearchType =
   | "company"
   | "role"
   | "skill"
-  | "certification";
+  | "certification"
+  | "knowledge";
 
 export interface SearchResult {
   id: string;
