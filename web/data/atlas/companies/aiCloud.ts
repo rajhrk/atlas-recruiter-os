@@ -6,10 +6,18 @@ export const aiCloud: AtlasCompany[] = [
     name: "CoreWeave",
     aliases: [],
     companyType: "AI Cloud Provider",
+    priority: "Tier 3",
     categoryIds: ["ai-cloud"],
     headquarters: "Roseland, New Jersey, USA",
     regions: ["Global"],
-    dataCenterPresence: ["North America", "EMEA"],
+    dataCenterPresence: [
+      "North America",
+      "EMEA",
+    ],
+    dataCenterTypes: [
+      "Cloud",
+      "AI",
+    ],
     website: "https://www.coreweave.com",
     coreTechnologies: [
       "NVIDIA GPU Clusters",
@@ -34,3 +42,5 @@ export const aiCloud: AtlasCompany[] = [
       "Fast-growing AI infrastructure provider with significant GPU deployments.",
   },
 ];
+
+export default aiCloud;

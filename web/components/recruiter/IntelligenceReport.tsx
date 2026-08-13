@@ -1,83 +1,164 @@
-// components/recruiter/RecruiterWorkspace.tsx
-
 "use client";
 
-import { useMemo, useState } from "react";
-
-import RecruiterFilters from "./RecruiterFilters";
-import IntelligenceReport from "./IntelligenceReport";
-
-import { atlasRoles } from "@/data/atlas/roles";
+import { AtlasRole } from "@/data/atlas/roles";
 import { RecruiterSearchRequest } from "@/types/recruiter";
 
-export default function RecruiterWorkspace() {
-  const [search, setSearch] =
-    useState<RecruiterSearchRequest | null>(null);
+interface IntelligenceReportProps {
+  role: AtlasRole;
+  search: RecruiterSearchRequest;
+}
 
-  const selectedRole = useMemo(() => {
-    if (!search) return null;
-
-    return (
-      atlasRoles.find(
-        (role) =>
-          role.role.toLowerCase() ===
-          search.role.toLowerCase()
-      ) ?? null
-    );
-  }, [search]);
-
+export default function IntelligenceReport({
+  role,
+  search,
+}: IntelligenceReportProps) {
   return (
-    <div className="mx-auto max-w-7xl space-y-8 p-8">
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight">
-          Recruiter Workspace
-        </h1>
+    <section className="space-y-6">
 
-        <p className="mt-2 text-slate-500">
-          Generate recruiter intelligence using the Atlas
-          knowledge base.
-        </p>
+      {/* Header */}
+
+      <div className="rounded-2xl border bg-white p-8 shadow-sm">
+        <div className="text-sm font-medium text-blue-600">
+          ATLAS RECRUITER INTELLIGENCE
+        </div>
+
+        <h2 className="mt-2 text-3xl font-bold">
+          {role.role}
+        </h2>
+
+        <div className="mt-4 flex flex-wrap gap-2 text-sm">
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            Domain: {search.domain}
+          </span>
+
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            Location: {search.location}
+          </span>
+
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            Seniority: {search.seniority}
+          </span>
+
+          {search.company && (
+            <span className="rounded-full bg-slate-100 px-3 py-1">
+              Company: {search.company}
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Target Companies */}
 
       <div className="rounded-2xl border bg-white p-6 shadow-sm">
-        <RecruiterFilters onGenerate={setSearch} />
+        <h3 className="text-xl font-semibold">
+          Target Companies
+        </h3>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {role.targetCompanies.map((company) => (
+            <span
+              key={company}
+              className="rounded-full border bg-slate-50 px-3 py-2 text-sm"
+            >
+              {company}
+            </span>
+          ))}
+        </div>
       </div>
 
-      {!search && (
-        <div className="rounded-2xl border border-dashed bg-slate-50 p-16 text-center">
-          <h2 className="text-2xl font-semibold">
-            Recruiter Intelligence Report
-          </h2>
+      {/* Core Skills */}
 
-          <p className="mt-3 text-slate-500">
-            Select a role and click{" "}
-            <strong>Generate Intelligence</strong>
-            {" "}to view companies, skills,
-            certifications, conferences, Boolean search,
-            AI prompt and recruiter notes.
-          </p>
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-semibold">
+          Core Skills
+        </h3>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {role.coreSkills.map((skill) => (
+            <span
+              key={skill}
+              className="rounded-full border bg-blue-50 px-3 py-2 text-sm"
+            >
+              {skill}
+            </span>
+          ))}
         </div>
-      )}
+      </div>
 
-      {search && !selectedRole && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-8">
-          <h2 className="text-xl font-semibold text-red-700">
-            Role not found
-          </h2>
+      {/* Certifications */}
 
-          <p className="mt-2 text-red-600">
-            The selected role does not exist in the
-            Atlas Role database.
-          </p>
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-semibold">
+          Certifications
+        </h3>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {role.certifications.map((certification) => (
+            <span
+              key={certification}
+              className="rounded-full border bg-green-50 px-3 py-2 text-sm"
+            >
+              {certification}
+            </span>
+          ))}
         </div>
-      )}
+      </div>
 
-      {selectedRole && (
-        <IntelligenceReport
-          role={selectedRole}
-          search={search}
-        />
-      )}
-    </div>
+      {/* Conferences */}
+
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-semibold">
+          Conferences & Talent Sources
+        </h3>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {role.conferences.map((conference) => (
+            <span
+              key={conference}
+              className="rounded-full border bg-purple-50 px-3 py-2 text-sm"
+            >
+              {conference}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Boolean Search */}
+
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-semibold">
+          Boolean Search
+        </h3>
+
+        <pre className="mt-4 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-white">
+          {role.booleanSearch}
+        </pre>
+      </div>
+
+      {/* AI Prompt */}
+
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-semibold">
+          AI Sourcing Prompt
+        </h3>
+
+        <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+          {role.aiPrompt}
+        </div>
+      </div>
+
+      {/* Recruiter Notes */}
+
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-semibold">
+          Recruiter Notes
+        </h3>
+
+        <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-slate-700">
+          {role.recruiterNotes}
+        </div>
+      </div>
+
+    </section>
   );
 }

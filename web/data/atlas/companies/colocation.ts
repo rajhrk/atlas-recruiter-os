@@ -6,6 +6,7 @@ export const colocation: AtlasCompany[] = [
     name: "Equinix",
     aliases: [],
     companyType: "Colocation Provider",
+    priority: "Tier 2",
     categoryIds: ["colocation"],
     headquarters: "Redwood City, California, USA",
     regions: ["Global"],
@@ -14,6 +15,11 @@ export const colocation: AtlasCompany[] = [
       "EMEA",
       "North America",
       "South America",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Edge",
+      "Cloud",
     ],
     website: "https://www.equinix.com",
     coreTechnologies: [
@@ -33,10 +39,15 @@ export const colocation: AtlasCompany[] = [
       "Data Center Technician",
       "Operations Manager",
     ],
-    certifications: ["CDCP", "CDCS"],
+    certifications: [
+      "CDCP",
+      "CDCS",
+    ],
     aiPrompt:
       "Recruit engineers experienced in mission-critical operations, power, cooling, and colocation environments.",
     recruiterNotes:
       "Global leader in colocation with extensive hiring across APAC, EMEA, and the Americas.",
   },
 ];
+
+export default colocation;

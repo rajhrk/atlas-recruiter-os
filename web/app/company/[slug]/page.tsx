@@ -1,136 +1,155 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getAllCompanies } from "@/lib/atlas/companyService";
-import { buildAtlasGraph } from "@/lib/graph/graphBuilder";
+import IntelligencePage from "@/components/intelligence/IntelligencePage";
+import CompanyHero from "@/components/intelligence/CompanyHero";
+import StatsGrid from "@/components/intelligence/StatsGrid";
+import QuickFacts from "@/components/intelligence/QuickFacts";
+import StringGrid from "@/components/intelligence/StringGrid";
+import TextCard from "@/components/intelligence/TextCard";
+import AIPromptCard from "@/components/intelligence/AIPromptCard";
 
-interface Props {
-  params: Promise<{
-    slug: string;
-  }>;
-}
+import CompanyLinks from "@/components/company/CompanyLinks";
+import HiringSignals from "@/components/company/HiringSignals";
+import HiringIntelligence from "@/components/company/HiringIntelligence";
+import SourcingSignals from "@/components/company/SourcingSignals";
 
-const toSlug = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
+import { getCompanyById } from "@/lib/atlas/companyService";
 
-export default async function CompanyPage({ params }: Props) {
+export default async function CompanyPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
 
-  const companies = getAllCompanies();
-
-  const search = slug.toLowerCase();
-
-  const company = companies.find((c) => {
-    return (
-      c.id.toLowerCase() === search ||
-      toSlug(c.name) === search ||
-      c.aliases.some((alias) => toSlug(alias) === search)
-    );
-  });
+  const company = getCompanyById(slug);
 
   if (!company) {
     notFound();
   }
 
-  const graph = buildAtlasGraph();
-
-  // Graph now uses company.id instead of company.name
-  const hiringEdges = graph.edges.filter(
-    (edge) =>
-      edge.from === company.id &&
-      edge.relationship === "hires"
-  );
-
-  const hiringRoles = hiringEdges
-    .map((edge) => graph.nodes.find((node) => node.id === edge.to))
-    .filter(Boolean);
-
   return (
-    <main className="mx-auto max-w-7xl space-y-8 p-10">
-      <Link
-        href="/company-intelligence"
-        className="text-blue-600 hover:underline"
-      >
-        ← Back to Companies
-      </Link>
+    <IntelligencePage
+      header={
+        <CompanyHero
+          name={company.name}
+          companyType={company.companyType}
+          headquarters={company.headquarters}
+        />
+      }
 
-      <section className="rounded-xl border bg-white p-8 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-bold">{company.name}</h1>
+      stats={
+        <StatsGrid
+          stats={[
+            {
+              label: "Regions",
+              value: company.regions.length.toString(),
+            },
+            {
+              label: "Data Center Types",
+              value: company.dataCenterTypes.length.toString(),
+            },
+            {
+              label: "Roles",
+              value: company.roles.length.toString(),
+            },
+            {
+              label: "Technologies",
+              value: company.coreTechnologies.length.toString(),
+            },
+          ]}
+        />
+      }
 
-            <p className="mt-2 text-lg text-gray-500">
-              {company.companyType}
-            </p>
-          </div>
+      sidebar={
+        <QuickFacts
+          items={[
+            {
+              label: "Company Type",
+              value: company.companyType,
+            },
+            {
+              label: "Priority",
+              value: company.priority,
+            },
+            {
+              label: "HQ",
+              value: company.headquarters,
+            },
+            {
+              label: "Website",
+              value: company.website,
+            },
+          ]}
+        />
+      }
+    >
+      <HiringSignals
+        priority={company.priority}
+        roles={company.roles}
+        technologies={company.coreTechnologies}
+        certifications={company.certifications}
+      />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-lg border p-4 text-center">
-              <div className="text-3xl font-bold">
-                {hiringRoles.length}
-              </div>
+      <HiringIntelligence
+        roles={company.roles}
+        technologies={company.coreTechnologies}
+        vendors={company.strategicVendors}
+        certifications={company.certifications}
+        recruiterNotes={company.recruiterNotes}
+      />
 
-              <div className="text-sm text-gray-500">
-                Hiring Roles
-              </div>
-            </div>
+      <SourcingSignals
+        aliases={company.aliases}
+        roles={company.roles}
+        technologies={company.coreTechnologies}
+        vendors={company.strategicVendors}
+        certifications={company.certifications}
+      />
 
-            <div className="rounded-lg border p-4 text-center">
-              <div className="text-3xl font-bold">
-                {
-                  graph.edges.filter(
-                    (edge) => edge.from === company.id
-                  ).length
-                }
-              </div>
+      <StringGrid
+        title="Data Center Types"
+        items={company.dataCenterTypes}
+      />
 
-              <div className="text-sm text-gray-500">
-                Relationships
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <StringGrid
+        title="Regions"
+        items={company.regions}
+      />
 
-      <section className="rounded-xl border p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">
-            Hiring Roles
-          </h2>
+      <StringGrid
+        title="Data Center Presence"
+        items={company.dataCenterPresence}
+      />
 
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-sm">
-            {hiringRoles.length} Roles
-          </span>
-        </div>
+      <StringGrid
+        title="Core Technologies"
+        items={company.coreTechnologies}
+      />
 
-        {hiringRoles.length === 0 ? (
-          <p className="text-gray-500">
-            No hiring relationships found.
-          </p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {hiringRoles.map((role) => (
-              <Link
-                key={role!.id}
-                href={`/role/${toSlug(role!.label)}`}
-                className="rounded-xl border p-5 transition hover:border-blue-500 hover:bg-blue-50 hover:shadow"
-              >
-                <div className="text-lg font-semibold">
-                  {role!.label}
-                </div>
+      <StringGrid
+        title="Strategic Vendors"
+        items={company.strategicVendors}
+      />
 
-                <div className="mt-3 text-sm text-gray-500">
-                  View Role Intelligence →
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
+      <StringGrid
+        title="Certifications"
+        items={company.certifications}
+      />
+
+      <CompanyLinks
+        companyName={company.name}
+        certifications={company.certifications}
+      />
+
+      <TextCard
+        title="Recruiter Notes"
+        text={company.recruiterNotes}
+      />
+
+      <AIPromptCard
+        prompt={company.aiPrompt}
+      />
+    </IntelligencePage>
   );
 }

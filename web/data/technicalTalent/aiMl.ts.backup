@@ -1,0 +1,1099 @@
+import {
+  AIMLDomain,
+  AIMLRole,
+  MLBooleanLibrary,
+  MLCompanyLandscape,
+  MLResearchLandscape,
+  RecommenderRole,
+} from "@/types/aiMl";
+
+export const aiMlRoles: AIMLRole[] = [
+  {
+    id: "ml-engineer",
+    title: "Machine Learning Engineer",
+    normalizedTitle: "Machine Learning Engineer",
+    family: "Machine Learning Engineering",
+    aliases: [
+      "ML Engineer",
+      "Machine Learning Software Engineer",
+      "Machine Learning Developer",
+      "ML Software Engineer",
+    ],
+    skills: [
+      "Machine Learning",
+      "Deep Learning",
+      "Supervised Learning",
+      "Unsupervised Learning",
+      "Model Development",
+      "Model Evaluation",
+      "Feature Engineering",
+    ],
+    technologies: [
+      "Python",
+      "PyTorch",
+      "TensorFlow",
+      "scikit-learn",
+      "XGBoost",
+    ],
+  },
+
+  {
+    id: "senior-ml-engineer",
+    title: "Senior Machine Learning Engineer",
+    normalizedTitle: "Machine Learning Engineer",
+    family: "Machine Learning Engineering",
+    seniority: "Senior",
+    aliases: [
+      "Senior ML Engineer",
+      "Senior Machine Learning Software Engineer",
+      "Senior Staff ML Engineer",
+      "Staff Machine Learning Engineer",
+    ],
+    skills: [
+      "Machine Learning",
+      "Deep Learning",
+      "Model Optimization",
+      "Distributed Training",
+      "Production ML",
+    ],
+    technologies: [
+      "Python",
+      "PyTorch",
+      "TensorFlow",
+      "Kubernetes",
+    ],
+  },
+
+  {
+    id: "ai-engineer",
+    title: "AI Engineer",
+    normalizedTitle: "AI Engineer",
+    family: "AI Engineering",
+    aliases: [
+      "AI Engineer",
+      "Senior AI Engineer",
+      "Staff AI Engineer",
+      "AI Software Engineer",
+    ],
+    skills: [
+      "Artificial Intelligence",
+      "Machine Learning",
+      "Deep Learning",
+      "Generative AI",
+    ],
+    technologies: [
+      "Python",
+      "PyTorch",
+      "TensorFlow",
+      "Transformers",
+    ],
+  },
+
+  {
+    id: "research-scientist",
+    title: "Research Scientist",
+    normalizedTitle: "Research Scientist",
+    family: "Research",
+    aliases: [
+      "Machine Learning Research Scientist",
+      "ML Research Scientist",
+      "Staff Research Scientist",
+      "Senior Staff Research Scientist",
+    ],
+    skills: [
+      "Machine Learning",
+      "Deep Learning",
+      "Research",
+      "Experimentation",
+      "Statistical Modeling",
+    ],
+    technologies: [
+      "Python",
+      "PyTorch",
+      "JAX",
+      "TensorFlow",
+    ],
+    researchAreas: [
+      "Machine Learning",
+      "Deep Learning",
+      "Representation Learning",
+      "Generative AI",
+    ],
+  },
+
+  {
+    id: "applied-scientist",
+    title: "Applied Scientist",
+    normalizedTitle: "Applied Scientist",
+    family: "Research",
+    aliases: [
+      "Senior Applied Scientist",
+      "Staff Applied Scientist",
+      "Applied Research Scientist",
+      "Staff Applied Research Scientist",
+    ],
+    skills: [
+      "Machine Learning",
+      "Experimentation",
+      "Statistical Modeling",
+      "Applied Research",
+    ],
+    technologies: [
+      "Python",
+      "PyTorch",
+      "TensorFlow",
+      "scikit-learn",
+    ],
+  },
+
+  {
+    id: "research-engineer",
+    title: "Research Engineer",
+    normalizedTitle: "Research Engineer",
+    family: "Research",
+    aliases: [
+      "AI Research Engineer",
+      "ML Research Engineer",
+      "Lead AI Research Engineer",
+      "Senior Research Engineer",
+    ],
+    skills: [
+      "Machine Learning",
+      "Research",
+      "Software Engineering",
+      "Experimentation",
+      "Model Development",
+    ],
+    technologies: [
+      "Python",
+      "C++",
+      "PyTorch",
+      "JAX",
+    ],
+  },
+
+  {
+    id: "data-scientist",
+    title: "Data Scientist",
+    normalizedTitle: "Data Scientist",
+    family: "Data Science",
+    aliases: [
+      "Senior Data Scientist",
+      "Lead Data Scientist",
+      "Principal Data Scientist",
+      "Staff Data Scientist",
+      "Applied Data Scientist",
+    ],
+    skills: [
+      "Statistics",
+      "Machine Learning",
+      "Predictive Modeling",
+      "Data Analysis",
+      "Experimentation",
+    ],
+    technologies: [
+      "Python",
+      "SQL",
+      "scikit-learn",
+      "Pandas",
+    ],
+  },
+
+  {
+    id: "nlp-engineer",
+    title: "NLP Engineer",
+    normalizedTitle: "NLP Engineer",
+    family: "NLP",
+    aliases: [
+      "Natural Language Processing Engineer",
+      "Senior NLP Engineer",
+      "NLP Research Engineer",
+      "Senior NLP Research Engineer",
+    ],
+    skills: [
+      "Natural Language Processing",
+      "Information Retrieval",
+      "Text Classification",
+      "Language Modeling",
+      "Transformers",
+    ],
+    technologies: [
+      "Python",
+      "PyTorch",
+      "Transformers",
+      "Hugging Face",
+    ],
+    researchAreas: [
+      "NLP",
+      "Information Retrieval",
+      "Large Language Models",
+    ],
+  },
+
+  {
+    id: "computer-vision-engineer",
+    title: "Computer Vision Engineer",
+    normalizedTitle: "Computer Vision Engineer",
+    family: "Computer Vision",
+    aliases: [
+      "Vision Engineer",
+      "Computer Vision Research Engineer",
+      "Vision Research Scientist",
+    ],
+    skills: [
+      "Computer Vision",
+      "Image Processing",
+      "Object Detection",
+      "Image Classification",
+      "Deep Learning",
+    ],
+    technologies: [
+      "Python",
+      "C++",
+      "PyTorch",
+      "OpenCV",
+    ],
+    researchAreas: [
+      "Computer Vision",
+      "Image Understanding",
+      "Visual Recognition",
+    ],
+  },
+
+  {
+    id: "speech-scientist",
+    title: "Speech Scientist",
+    normalizedTitle: "Speech Scientist",
+    family: "Speech",
+    aliases: [
+      "Speech Research Scientist",
+      "Lead Speech Scientist",
+      "Speech R&D Engineer",
+      "Speech Research Engineer",
+    ],
+    skills: [
+      "Speech Recognition",
+      "Speech Synthesis",
+      "Audio Processing",
+      "Deep Learning",
+      "Natural Language Processing",
+    ],
+    technologies: [
+      "Python",
+      "PyTorch",
+      "TensorFlow",
+    ],
+  },
+
+  {
+    id: "mlops-engineer",
+    title: "MLOps Engineer",
+    normalizedTitle: "MLOps Engineer",
+    family: "MLOps / ML Infrastructure",
+    aliases: [
+      "Senior MLOps Engineer",
+      "ML Platform Engineer",
+      "ML Infrastructure Engineer",
+      "Machine Learning Platform Engineer",
+    ],
+    skills: [
+      "MLOps",
+      "Model Deployment",
+      "Model Monitoring",
+      "Distributed Systems",
+      "ML Infrastructure",
+    ],
+    technologies: [
+      "Python",
+      "Kubernetes",
+      "Docker",
+      "MLflow",
+      "Kubeflow",
+    ],
+  },
+
+  {
+    id: "ml-infrastructure-engineer",
+    title: "ML Infrastructure Engineer",
+    normalizedTitle: "ML Infrastructure Engineer",
+    family: "MLOps / ML Infrastructure",
+    aliases: [
+      "Machine Learning Infrastructure Engineer",
+      "AI Infrastructure Engineer",
+      "ML Platform Engineer",
+    ],
+    skills: [
+      "Distributed Systems",
+      "GPU Computing",
+      "ML Infrastructure",
+      "Distributed Training",
+      "Model Serving",
+    ],
+    technologies: [
+      "CUDA",
+      "Kubernetes",
+      "NVIDIA GPUs",
+      "PyTorch",
+      "Ray",
+    ],
+  },
+
+  {
+    id: "generative-ai-engineer",
+    title: "Generative AI Engineer",
+    normalizedTitle: "Generative AI Engineer",
+    family: "Generative AI",
+    aliases: [
+      "GenAI Engineer",
+      "Generative AI Research Engineer",
+      "LLM Engineer",
+      "Large Language Model Engineer",
+    ],
+    skills: [
+      "Generative AI",
+      "Large Language Models",
+      "Transformers",
+      "Fine-Tuning",
+      "RAG",
+      "Prompt Engineering",
+    ],
+    technologies: [
+      "PyTorch",
+      "Hugging Face",
+      "Transformers",
+      "CUDA",
+    ],
+    researchAreas: [
+      "Generative AI",
+      "Large Language Models",
+      "Multimodal AI",
+    ],
+  },
+
+  {
+    id: "algorithm-engineer",
+    title: "Algorithm Engineer",
+    normalizedTitle: "Algorithm Engineer",
+    family: "Machine Learning Engineering",
+    aliases: [
+      "Senior Algorithm Engineer",
+      "Staff Algorithm Engineer",
+      "AI Algorithm Engineer",
+      "Staff AI Algorithm Engineer",
+    ],
+    skills: [
+      "Machine Learning",
+      "Algorithms",
+      "Optimization",
+      "Ranking",
+      "Prediction",
+    ],
+    technologies: [
+      "Python",
+      "C++",
+      "PyTorch",
+      "TensorFlow",
+    ],
+  },
+];
+
+export const recommenderRoles: RecommenderRole[] = [
+  {
+    id: "recommendation-algorithm-engineer",
+    title: "Recommendation Algorithm Engineer",
+    normalizedTitle: "Recommendation Engineer",
+    area: "Core Recommendation",
+    aliases: [
+      "Algorithm Engineer, Recommendation",
+      "Recommendation Engineer",
+      "Recommender Systems Engineer",
+    ],
+    keywords: [
+      "recommendation systems",
+      "recommender systems",
+      "recommendation models",
+      "personalization",
+      "ranking",
+      "retrieval",
+      "re-ranking",
+      "RecSys",
+    ],
+  },
+
+  {
+    id: "search-ranking-engineer",
+    title: "Search Ranking Engineer",
+    normalizedTitle: "Search / Ranking Engineer",
+    area: "Search",
+    aliases: [
+      "Search Ranking Engineer",
+      "Search Relevance Engineer",
+      "Search Algorithm Engineer",
+      "Search Engineer",
+    ],
+    keywords: [
+      "search ranking",
+      "search relevance",
+      "information retrieval",
+      "learning to rank",
+      "ranking",
+      "re-ranking",
+      "query understanding",
+      "search personalization",
+    ],
+  },
+
+  {
+    id: "recommendation-feed-engineer",
+    title: "Feed Recommendation Engineer",
+    normalizedTitle: "Recommendation Engineer",
+    area: "Feed",
+    aliases: [
+      "Feed Ranking Engineer",
+      "Feed Recommendation Engineer",
+      "Feed Algorithm Engineer",
+      "Personalization Engineer",
+    ],
+    keywords: [
+      "feed ranking",
+      "feed recommendation",
+      "personalized feed",
+      "content recommendation",
+      "recommendation ranking",
+      "personalization",
+    ],
+  },
+
+  {
+    id: "ads-ranking-engineer",
+    title: "Ads Ranking Engineer",
+    normalizedTitle: "Ads Ranking Engineer",
+    area: "Ads",
+    aliases: [
+      "Ads Recommendation Engineer",
+      "Ads Algorithm Engineer",
+      "Computational Advertising Engineer",
+    ],
+    keywords: [
+      "ads ranking",
+      "ads recommendation",
+      "CTR prediction",
+      "click-through rate",
+      "ad targeting",
+      "computational advertising",
+    ],
+  },
+
+  {
+    id: "video-recommendation-engineer",
+    title: "Video Recommendation Engineer",
+    normalizedTitle: "Video Recommendation Engineer",
+    area: "Video",
+    aliases: [
+      "Video Recommendation Algorithm Engineer",
+      "Video Ranking Engineer",
+      "Short Video Recommendation Engineer",
+      "Video Recommender Systems Engineer",
+    ],
+    keywords: [
+      "video recommendation",
+      "video ranking",
+      "video retrieval",
+      "short video recommendation",
+      "livestream recommendation",
+      "video search",
+      "video understanding",
+    ],
+  },
+
+  {
+    id: "ecommerce-recommendation-engineer",
+    title: "E-commerce Recommendation Engineer",
+    normalizedTitle: "Recommendation Engineer",
+    area: "E-commerce",
+    aliases: [
+      "E-commerce Recommendation Engineer",
+      "E-commerce Ranking Engineer",
+      "Product Recommendation Engineer",
+    ],
+    keywords: [
+      "e-commerce recommendation",
+      "product recommendation",
+      "recommendation ranking",
+      "search ranking",
+      "personalization",
+      "retrieval",
+    ],
+  },
+];
+
+export const mlCompanyLandscape: MLCompanyLandscape[] = [
+  {
+    company: "ByteDance",
+    region: "China",
+    relevantAreas: [
+      "Machine Learning",
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "Feed",
+      "Video",
+      "Generative AI",
+      "Multimodal",
+    ],
+    sourcingKeywords: [
+      "TikTok Search",
+      "Search Ranking",
+      "Recommendation Algorithm",
+      "Video Recommendation",
+      "Feed Recommendation",
+      "Short Video",
+      "Video Retrieval",
+      "AIGC",
+    ],
+  },
+
+  {
+    company: "Baidu",
+    region: "China",
+    relevantAreas: [
+      "Machine Learning",
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "NLP",
+      "Generative AI",
+    ],
+    sourcingKeywords: [
+      "Baidu Search",
+      "Search Algorithm",
+      "Search Ranking",
+      "Recommendation",
+      "NLP",
+      "AI",
+    ],
+  },
+
+  {
+    company: "Kuaishou",
+    region: "China",
+    relevantAreas: [
+      "Machine Learning",
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "Video",
+      "Feed",
+    ],
+    sourcingKeywords: [
+      "Kuaishou Search",
+      "Recommendation Algorithm",
+      "Video Recommendation",
+      "Short Video",
+      "Feed Recommendation",
+    ],
+  },
+
+  {
+    company: "Alibaba",
+    region: "China",
+    relevantAreas: [
+      "Machine Learning",
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "E-commerce",
+    ],
+    sourcingKeywords: [
+      "Taobao Recommendation",
+      "Search Ranking",
+      "E-commerce Recommendation",
+      "Recommendation System",
+      "Learning to Rank",
+    ],
+  },
+
+  {
+    company: "Tencent",
+    region: "China",
+    relevantAreas: [
+      "Machine Learning",
+      "Recommendation",
+      "Feed",
+      "Ads",
+      "Search",
+    ],
+    sourcingKeywords: [
+      "Recommendation",
+      "Feed Recommendation",
+      "Ads Ranking",
+      "Search",
+      "Ranking",
+    ],
+  },
+
+  {
+    company: "Shopee",
+    region: "Singapore",
+    relevantAreas: [
+      "Machine Learning",
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "Ads",
+      "Video",
+      "E-commerce",
+    ],
+    sourcingKeywords: [
+      "Search Ranking",
+      "Search Relevance",
+      "Search Personalization",
+      "Ads Ranking",
+      "Recommendation Ranking",
+      "Video Intelligence",
+    ],
+  },
+
+  {
+    company: "Grab",
+    region: "Singapore",
+    relevantAreas: [
+      "Machine Learning",
+      "Recommendation",
+      "Ranking",
+      "Ads",
+    ],
+    sourcingKeywords: [
+      "Search Ranking",
+      "Personalization",
+      "Recommendation",
+      "Ranking",
+      "Machine Learning",
+    ],
+  },
+
+  {
+    company: "Google",
+    region: "United States",
+    relevantAreas: [
+      "Machine Learning",
+      "AI Research",
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "Ads",
+      "NLP",
+      "Computer Vision",
+      "Generative AI",
+    ],
+    sourcingKeywords: [
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "Machine Learning",
+      "Research",
+      "Deep Learning",
+      "Generative AI",
+    ],
+  },
+
+  {
+    company: "Meta",
+    region: "United States",
+    relevantAreas: [
+      "Machine Learning",
+      "AI Research",
+      "Recommendation",
+      "Feed",
+      "Ads",
+      "Computer Vision",
+      "Generative AI",
+    ],
+    sourcingKeywords: [
+      "Feed Ranking",
+      "Recommendation",
+      "Ads Ranking",
+      "AI Research",
+      "Machine Learning",
+      "Generative AI",
+    ],
+  },
+
+  {
+    company: "NAVER",
+    region: "South Korea",
+    relevantAreas: [
+      "Machine Learning",
+      "Search",
+      "Ranking",
+      "Recommendation",
+      "NLP",
+    ],
+    sourcingKeywords: [
+      "Search Personalization",
+      "Search Modeling",
+      "Text Retrieval",
+      "Neural Search",
+      "Recommendation",
+    ],
+  },
+
+  {
+    company: "Kakao",
+    region: "South Korea",
+    relevantAreas: [
+      "Machine Learning",
+      "Recommendation",
+      "Search",
+      "Ranking",
+    ],
+    sourcingKeywords: [
+      "Kakao Recommendation",
+      "Recommendation Team",
+      "Search",
+      "Ranking",
+    ],
+  },
+];
+
+export const mlResearchLandscape: MLResearchLandscape[] = [
+  {
+    region: "China",
+    companies: [
+      "Baidu",
+      "Alibaba",
+      "Tencent",
+      "ByteDance",
+      "Kuaishou",
+    ],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "Recommendation Systems",
+      "Search",
+      "Computer Vision",
+      "NLP",
+      "Generative AI",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "DBLP",
+      "arXiv",
+      "Semantic Scholar",
+      "ResearchGate",
+    ],
+  },
+
+  {
+    region: "South Korea",
+    companies: [
+      "NAVER",
+      "Kakao",
+    ],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "Search",
+      "Recommendation",
+      "NLP",
+      "Computer Vision",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "DBLP",
+      "ORCID",
+      "Semantic Scholar",
+    ],
+  },
+
+  {
+    region: "Singapore",
+    companies: [
+      "Grab",
+      "Shopee",
+    ],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "Recommendation",
+      "Search",
+      "Computer Vision",
+      "NLP",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "ResearchGate",
+      "DBLP",
+      "ORCID",
+      "Semantic Scholar",
+    ],
+  },
+
+  {
+    region: "India",
+    companies: [],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "AI",
+      "NLP",
+      "Computer Vision",
+      "Generative AI",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "arXiv",
+      "ORCID",
+      "DBLP",
+      "Semantic Scholar",
+    ],
+  },
+
+  {
+    region: "Taiwan",
+    companies: [],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "Computer Vision",
+      "AI Hardware",
+      "Deep Learning",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "DBLP",
+      "arXiv",
+      "IEEE",
+      "Semantic Scholar",
+    ],
+  },
+
+  {
+    region: "Japan",
+    companies: [],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "Robotics",
+      "Computer Vision",
+      "NLP",
+      "AI Research",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "DBLP",
+      "ORCID",
+      "IEEE",
+      "Semantic Scholar",
+    ],
+  },
+
+  {
+    region: "United States",
+    companies: [
+      "Google",
+      "Meta",
+    ],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "Deep Learning",
+      "Generative AI",
+      "Computer Vision",
+      "NLP",
+      "Recommendation Systems",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "arXiv",
+      "DBLP",
+      "ORCID",
+      "Semantic Scholar",
+      "IEEE",
+      "Papers with Code",
+    ],
+  },
+
+  {
+    region: "EMEA",
+    companies: [],
+    researchOrganizations: [],
+    researchAreas: [
+      "Machine Learning",
+      "AI Research",
+      "Computer Vision",
+      "NLP",
+      "Robotics",
+    ],
+    sourcingSources: [
+      "Google Scholar",
+      "arXiv",
+      "DBLP",
+      "ORCID",
+      "Semantic Scholar",
+      "IEEE",
+    ],
+  },
+];
+
+export const mlBooleanLibrary: MLBooleanLibrary[] = [
+  {
+    id: "ml-senior-engineering",
+    name: "Senior ML Engineering",
+    category: "Role",
+    useCase: "Senior and staff-level machine learning engineering sourcing.",
+    query:
+      '("Senior Machine Learning Engineer" OR "Staff Machine Learning Engineer" OR "Principal Machine Learning Engineer" OR "Lead Machine Learning Engineer" OR "Senior Staff ML Engineer")',
+  },
+
+  {
+    id: "ml-general",
+    name: "General Machine Learning",
+    category: "General ML",
+    useCase: "Broad ML talent discovery.",
+    query:
+      '("machine learning" OR "deep learning" OR "artificial intelligence" OR "reinforcement learning" OR "neural networks" OR "machine learning engineer")',
+  },
+
+  {
+    id: "recommender",
+    name: "Recommendation Systems",
+    category: "Recommendation",
+    useCase: "Recommender systems and personalization talent.",
+    query:
+      '("recommendation systems" OR "recommender systems" OR "recommendation models" OR "personalization" OR "personalised recommendation" OR "RecSys")',
+  },
+
+  {
+    id: "search-ranking",
+    name: "Search and Ranking",
+    category: "Search",
+    useCase: "Search relevance, ranking and retrieval talent.",
+    query:
+      '("search ranking" OR "search relevance" OR "information retrieval" OR "learning to rank" OR "ranking algorithm" OR "re-ranking")',
+  },
+
+  {
+    id: "video-recommendation",
+    name: "Video Recommendation",
+    category: "Recommendation",
+    useCase: "Short-video, video-feed and livestream recommendation sourcing.",
+    query:
+      '("video recommendation" OR "video ranking" OR "short video recommendation" OR "livestream recommendation" OR "video retrieval" OR "video search")',
+  },
+
+  {
+    id: "ml-researcher",
+    name: "ML Researcher",
+    category: "Research",
+    useCase: "Research-oriented ML sourcing.",
+    query:
+      '("Machine Learning Researcher" OR "Machine Learning Research Scientist" OR "Research Scientist" OR "Applied Scientist" OR "Research Engineer")',
+  },
+
+  {
+    id: "conference-ml",
+    name: "ML Conference Researcher",
+    category: "Conference",
+    useCase: "Finding researchers with major ML/CV conference evidence.",
+    query:
+      '("NeurIPS" OR "NIPS" OR "ICML" OR "CVPR" OR "ICCV" OR "ECCV" OR "AAAI" OR "KDD" OR "SIGGRAPH") AND (Scientist OR Researcher OR Engineer)',
+  },
+
+  {
+    id: "research-xray",
+    name: "Researcher X-Ray",
+    category: "X-Ray",
+    useCase: "Finding ML researchers outside normal LinkedIn results.",
+    query:
+      '(intitle:resume OR inurl:resume) ("machine learning" OR "deep learning" OR "recommendation systems") (Scientist OR Engineer OR Researcher)',
+  },
+];
+
+export const aiMlDomain: AIMLDomain = {
+  domain: "AI / ML",
+
+  roles: aiMlRoles,
+
+  recommenderRoles,
+
+  companyLandscape: mlCompanyLandscape,
+
+  researchLandscape: mlResearchLandscape,
+
+  booleanLibrary: mlBooleanLibrary,
+
+  coreSkills: [
+    "Machine Learning",
+    "Deep Learning",
+    "Artificial Intelligence",
+    "Supervised Learning",
+    "Unsupervised Learning",
+    "Reinforcement Learning",
+    "Natural Language Processing",
+    "Computer Vision",
+    "Speech Recognition",
+    "Information Retrieval",
+    "Recommendation Systems",
+    "Ranking",
+    "Personalization",
+    "Generative AI",
+    "Large Language Models",
+    "Multimodal AI",
+    "Model Optimization",
+    "Feature Engineering",
+    "Statistical Modeling",
+    "Experimentation",
+  ],
+
+  coreTechnologies: [
+    "Python",
+    "C++",
+    "PyTorch",
+    "TensorFlow",
+    "JAX",
+    "scikit-learn",
+    "XGBoost",
+    "Hugging Face",
+    "Transformers",
+    "CUDA",
+    "Kubernetes",
+    "MLflow",
+    "Kubeflow",
+    "Ray",
+  ],
+
+  conferences: [
+    "NeurIPS",
+    "ICML",
+    "ICLR",
+    "CVPR",
+    "ICCV",
+    "ECCV",
+    "AAAI",
+    "KDD",
+    "SIGGRAPH",
+  ],
+
+  researchSources: [
+    "Google Scholar",
+    "arXiv",
+    "Semantic Scholar",
+    "ORCID",
+    "DBLP",
+    "ResearchGate",
+    "Papers with Code",
+    "IEEE",
+  ],
+
+  developerSources: [
+    "GitHub",
+    "Stack Overflow",
+    "Hugging Face",
+    "Kaggle",
+  ],
+
+  patentSources: [
+    "Google Patents",
+  ],
+};

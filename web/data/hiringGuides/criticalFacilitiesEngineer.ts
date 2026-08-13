@@ -21,22 +21,10 @@ whyHireIsDifficult: [
   "The role requires expertise across electrical, mechanical and operational systems.",
 ],
 
-  dailyResponsibilities: [
+ responsibilities: [
   "Monitor UPS systems and review operating status.",
   "Monitor diesel generators for readiness and alarms.",
   "Inspect switchgear, transformers and electrical distribution systems.",
-  "Monitor BMS (Building Management System) alarms.",
-  "Monitor EPMS (Electrical Power Monitoring System) alarms.",
-  "Monitor cooling systems including CRAH, CRAC and chillers.",
-  "Perform routine equipment inspections and record findings.",
-  "Respond to critical alarms and infrastructure incidents.",
-  "Coordinate preventive and corrective maintenance with vendors.",
-  "Perform switching procedures following approved Method of Procedure (MOP) documents.",
-  "Maintain accurate shift logs and operational documentation.",
-  "Review environmental conditions including temperature and humidity.",
-  "Escalate abnormal conditions to senior engineers and management.",
-  "Ensure compliance with safety procedures and permit-to-work requirements.",
-  "Maintain 24×7 operational readiness of all mission critical infrastructure.",
 ],
 
 weeklyResponsibilities: [
@@ -107,12 +95,22 @@ backgrounds: [
 ],
 
 careerPath: [
-  "Electrical Technician → Critical Facilities Technician → Critical Facilities Engineer → Senior Critical Facilities Engineer → Shift Lead → Facilities Manager → Site Operations Manager → Regional Operations Manager",
-  "Mechanical Technician → Critical Facilities Technician → Critical Facilities Engineer → Senior Critical Facilities Engineer → Facilities Manager",
-  "Field Service Engineer (UPS/Generator/Switchgear) → Critical Facilities Engineer → Senior Critical Facilities Engineer",
-  "Commissioning Engineer → Critical Facilities Engineer → Facilities Manager → Regional Facilities Manager",
-  "Building Services Engineer → Critical Facilities Engineer → Data Center Operations Manager",
-  "Power Systems Engineer → Critical Facilities Engineer → Electrical Engineering Manager",
+  {
+    title:
+      "Electrical Technician → Critical Facilities Technician → Critical Facilities Engineer → Senior Critical Facilities Engineer",
+  },
+  {
+    title:
+      "Mechanical Technician → Critical Facilities Technician → Critical Facilities Engineer → Senior Critical Facilities Engineer",
+  },
+  {
+    title:
+      "Field Service Engineer (UPS/Generator/Switchgear) → Critical Facilities Engineer → Senior Critical Facilities Engineer",
+  },
+  {
+    title:
+      "Commissioning Engineer → Critical Facilities Engineer → Facilities Manager → Regional Facilities Manager",
+  },
 ],
 
  mustHaveSkills: [

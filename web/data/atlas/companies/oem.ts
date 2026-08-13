@@ -6,6 +6,7 @@ export const oem: AtlasCompany[] = [
     name: "Schneider Electric",
     aliases: ["Schneider"],
     companyType: "OEM",
+    priority: "Tier 3",
     categoryIds: ["oem"],
     headquarters: "Rueil-Malmaison, France",
     regions: ["Global"],
@@ -16,6 +17,15 @@ export const oem: AtlasCompany[] = [
       "South America",
       "Middle East",
       "Africa",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Colocation",
+      "Enterprise",
+      "Edge",
+      "Managed Services",
+      "Cloud",
+      "AI",
     ],
     website: "https://www.se.com",
     coreTechnologies: [
@@ -38,3 +48,5 @@ export const oem: AtlasCompany[] = [
       "One of the world's largest suppliers of mission-critical electrical infrastructure.",
   },
 ];
+
+export default oem;

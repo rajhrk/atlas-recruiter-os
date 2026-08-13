@@ -1,40 +1,85 @@
-import {
-  BooleanExample,
-  IntelligenceObject,
-  Relationship,
-  SidebarItem,
-  TimelineItem,
-} from "@/types/intelligence";
+import { TimelineItem } from "@/types/intelligence";
 
-export interface HiringGuide extends IntelligenceObject {
-
-  // Hiring specific
+export interface HiringGuide {
+  // Identity
+  id: string;
   role: string;
+  category: string;
+  overview: string;
 
+  // Hiring difficulty
+  whyHireIsDifficult?: string[];
   marketDifficulty: string;
-
   timeToFill: string;
 
-  salaryNotes: string[];
+  // Responsibilities
+  responsibilities: string[];
+  weeklyResponsibilities?: string[];
+  emergencyResponsibilities?: string[];
 
+  // Talent backgrounds
+  backgrounds?: string[];
+  education?: string[];
+
+  // Career path
+  careerPath?: TimelineItem[];
+
+  // Skills
+  mustHaveSkills?: string[];
+  niceToHaveSkills?: string[];
+
+  // Talent pools
+  adjacentTalentPools?: string[];
+
+  // Hiring targets
+  targetCompanies?: string[];
+  targetTitles?: string[];
+
+  // Vendors / ecosystem
+  vendorEcosystem?: string[];
+  vendorCompanies: string[];
+  competitorCompanies: string[];
+
+  // Recruiting intelligence
   recruitingStrategy: string[];
-
+  recruiterTips?: string[];
+  recruiterNotes?: string[];
   toolsUsed: string[];
 
-  kpis: string[];
+  // Search
+  booleanStrings?: string[];
 
-  travelRequirements: string[];
+  booleanExamples?: {
+    title: string;
+    query: string;
+  }[];
 
-  shiftRequirements: string[];
-
-  commonJobTitles: string[];
+  linkedinSearches?: string[];
+  xraySearches?: string[];
+  githubSearches?: string[];
 
   keywords: string[];
 
-  vendorCompanies: string[];
+  // Hiring intelligence
+  interviewQuestions?: string[];
+  redFlags?: string[];
 
-  competitorCompanies: string[];
-
+  // Compensation / logistics
+  salaryNotes: string[];
+  kpis: string[];
+  travelRequirements: string[];
+  shiftRequirements: string[];
+  commonJobTitles: string[];
   careerSources: string[];
+  communities?: string[];
 
+  // Certifications / conferences
+  certifications?: string[];
+  conferences?: string[];
+
+  // AI
+  aiPrompt: string;
+
+  // Relationships
+  relatedGuides?: string[];
 }

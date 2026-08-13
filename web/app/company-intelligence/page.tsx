@@ -1,165 +1,310 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+
+import CompanyStats from "@/components/company/CompanyStats";
+import CompanyTypeBreakdown from "@/components/company/CompanyTypeBreakdown";
+import DataCenterTypeBreakdown from "@/components/company/DataCenterTypeBreakdown";
+import CompanyRegionBreakdown from "@/components/company/CompanyRegionBreakdown";
+import CompanyPriorityBreakdown from "@/components/company/CompanyPriorityBreakdown";
+import TechnologyBreakdown from "@/components/company/TechnologyBreakdown";
+import VendorBreakdown from "@/components/company/VendorBreakdown";
+import CertificationBreakdown from "@/components/company/CertificationBreakdown";
+import RoleBreakdown from "@/components/company/RoleBreakdown";
+
+import CompanyCard from "@/components/company/CompanyCard";
+import CompanyFilters from "@/components/company/CompanyFilters";
+import CompanySearch from "@/components/company/CompanySearch";
+import RegionFilter from "@/components/company/RegionFilter";
+import PriorityFilter from "@/components/company/PriorityFilter";
+import DataCenterTypeFilter from "@/components/company/DataCenterTypeFilter";
 
 import { getAllCompanies } from "@/lib/atlas/companyService";
 
-import AtlasHeader from "@/components/atlas/AtlasHeader";
-import AtlasSection from "@/components/atlas/AtlasSection";
-import SearchParamsBoundary from "@/components/atlas/SearchParamsBoundary";
+export default function CompanyDirectoryPage() {
+  const companies = getAllCompanies();
 
-import DetailCard from "@/components/atlas/DetailCard";
-import InfoCard from "@/components/atlas/InfoCard";
-import CopyButton from "@/components/atlas/CopyButton";
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
+  const [region, setRegion] = useState("All");
+  const [priority, setPriority] = useState("All");
+  const [dataCenterType, setDataCenterType] = useState("All");
 
-const atlasCompanies = getAllCompanies();
+  const companyTypes = useMemo(() => {
+    return Array.from(
+      new Set(
+        companies
+          .map((company) => company.companyType)
+          .filter(Boolean)
+      )
+    ).sort();
+  }, [companies]);
 
-function CompanyIntelligenceContent() {
-  const searchParams = useSearchParams();
+  const priorities = useMemo(() => {
+    return Array.from(
+      new Set(
+        companies
+          .map((company) => company.priority)
+          .filter(Boolean)
+      )
+    ).sort();
+  }, [companies]);
 
-  const [selectedId, setSelectedId] = useState(
-    atlasCompanies[0]?.id ?? ""
-  );
+  const dataCenterTypes = useMemo(() => {
+    return Array.from(
+      new Set(
+        companies.flatMap(
+          (company) => company.dataCenterTypes
+        )
+      )
+    ).sort();
+  }, [companies]);
 
-  useEffect(() => {
-    const companyName = searchParams.get("company");
+  const filteredCompanies = useMemo(() => {
+    const normalizedSearch = search
+      .trim()
+      .toLowerCase();
 
-    if (!companyName) return;
+    return companies.filter((company) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        company.name
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        company.aliases.some((alias) =>
+          alias
+            .toLowerCase()
+            .includes(normalizedSearch)
+        );
 
-    const company = atlasCompanies.find(
-      (c) => c.name.toLowerCase() === companyName.toLowerCase()
-    );
+      const matchesFilter =
+        filter === "All" ||
+        company.companyType === filter;
 
-    if (company) {
-      setSelectedId(company.id);
-    }
-  }, [searchParams]);
+      /*
+       * Region is maintained as a string because the
+       * RegionFilter component currently returns a string.
+       *
+       * Cast only at the boundary where the strongly typed
+       * company region arrays are checked.
+       */
+      const matchesRegion =
+        region === "All" ||
+        company.regions.includes(
+          region as (typeof company.regions)[number]
+        ) ||
+        company.dataCenterPresence.includes(
+          region as (typeof company.dataCenterPresence)[number]
+        );
 
-  const company =
-    atlasCompanies.find((c) => c.id === selectedId) ??
-    atlasCompanies[0];
+      const matchesPriority =
+        priority === "All" ||
+        company.priority === priority;
 
-  if (!company) {
-    return (
-      <main className="p-6">
-        <h1 className="text-3xl font-bold">
+      const matchesDataCenterType =
+        dataCenterType === "All" ||
+        company.dataCenterTypes.includes(
+          dataCenterType as (typeof company.dataCenterTypes)[number]
+        );
+
+      return (
+        matchesSearch &&
+        matchesFilter &&
+        matchesRegion &&
+        matchesPriority &&
+        matchesDataCenterType
+      );
+    });
+  }, [
+    companies,
+    search,
+    filter,
+    region,
+    priority,
+    dataCenterType,
+  ]);
+
+  return (
+    <main className="space-y-10">
+
+      {/* Header */}
+
+      <div>
+        <div className="text-sm font-medium text-blue-600">
+          ATLAS INTELLIGENCE
+        </div>
+
+        <h1 className="mt-2 text-4xl font-bold">
           Company Intelligence
         </h1>
 
-        <p>No companies available.</p>
-      </main>
-    );
-  }
+        <p className="mt-2 max-w-3xl text-lg text-slate-600">
+          Recruiter intelligence platform for
+          hyperscalers, colocation providers, OEMs
+          and AI infrastructure companies.
+        </p>
+      </div>
 
-  return (
-    <main className="mx-auto max-w-7xl p-8 space-y-8">
-      <AtlasHeader
-        title="Company Intelligence"
-        description="Recruiter intelligence for target companies."
+      {/* Search */}
+
+      <CompanySearch
+        value={search}
+        onChange={setSearch}
       />
 
-      <AtlasSection className="space-y-6">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Select Company
-          </label>
+      {/* Filters */}
 
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            className="w-full max-w-lg rounded-lg border p-3"
-          >
-            {atlasCompanies.map((c) => (
-              <option
-                key={c.id}
-                value={c.id}
-              >
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="space-y-4">
 
-        <div>
-          <h2 className="text-3xl font-bold">
-            {company.name}
-          </h2>
+        <CompanyFilters
+          selected={filter}
+          onSelect={setFilter}
+          options={companyTypes}
+        />
 
-          <p className="text-gray-600">
-            {company.companyType}
-          </p>
-        </div>
+        <DataCenterTypeFilter
+          selected={dataCenterType}
+          onSelect={setDataCenterType}
+          options={dataCenterTypes}
+        />
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <DetailCard
-            title="HQ"
-            value={company.headquarters}
-          />
+        <RegionFilter
+          selected={region}
+          onSelect={setRegion}
+        />
 
-          <DetailCard
-            title="Regions"
-            value={company.regions.join(", ")}
-          />
+        <PriorityFilter
+          selected={priority}
+          onSelect={setPriority}
+          options={priorities}
+        />
 
-          <DetailCard
-            title="Data Center Presence"
-            value={company.dataCenterPresence.join(", ")}
-          />
-        </div>
+      </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <InfoCard
-            title="⚙️ Core Technologies"
-            items={company.coreTechnologies}
-          />
+      {/* Core Statistics */}
 
-          <InfoCard
-            title="🤝 Strategic Vendors"
-            items={company.strategicVendors}
-          />
+      <CompanyStats
+        companies={companies}
+        filtered={filteredCompanies.length}
+      />
 
-          <InfoCard
-            title="💼 Typical Roles"
-            items={company.roles}
-          />
+      {/* Company Landscape */}
 
-          <InfoCard
-            title="🏆 Certifications"
-            items={company.certifications}
-          />
-        </div>
+      <CompanyTypeBreakdown
+        companies={companies}
+      />
 
-        <AtlasSection>
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              🤖 AI Recruiter Prompt
-            </h3>
+      {/* Data Center Landscape */}
 
-            <CopyButton text={company.aiPrompt} />
+      <DataCenterTypeBreakdown
+        companies={companies}
+      />
+
+      {/* Regional Coverage */}
+
+      <CompanyRegionBreakdown
+        companies={companies}
+      />
+
+      {/* Recruiter Priority */}
+
+      <CompanyPriorityBreakdown
+        companies={companies}
+      />
+
+      {/* Technology Intelligence */}
+
+      <TechnologyBreakdown
+        companies={companies}
+      />
+
+      {/* Vendor Intelligence */}
+
+      <VendorBreakdown
+        companies={companies}
+      />
+
+      {/* Certification Intelligence */}
+
+      <CertificationBreakdown
+        companies={companies}
+      />
+
+      {/* Role Intelligence */}
+
+      <RoleBreakdown
+        companies={companies}
+      />
+
+      {/* Company Directory */}
+
+      <section>
+
+        <div className="mb-6 flex items-end justify-between">
+
+          <div>
+            <h2 className="text-2xl font-bold">
+              Company Directory
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Showing {filteredCompanies.length} of{" "}
+              {companies.length} companies
+            </p>
           </div>
 
-          <p className="rounded-lg bg-slate-50 p-4">
-            {company.aiPrompt}
-          </p>
-        </AtlasSection>
+          {(search ||
+            filter !== "All" ||
+            region !== "All" ||
+            priority !== "All" ||
+            dataCenterType !== "All") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setFilter("All");
+                setRegion("All");
+                setPriority("All");
+                setDataCenterType("All");
+              }}
+              className="rounded-lg border bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50"
+            >
+              Clear Filters
+            </button>
+          )}
 
-        <AtlasSection>
-          <h3 className="mb-3 text-lg font-semibold">
-            📝 Recruiter Notes
-          </h3>
+        </div>
 
-          <p>{company.recruiterNotes}</p>
-        </AtlasSection>
-      </AtlasSection>
+        {filteredCompanies.length === 0 ? (
+
+          <div className="rounded-xl border bg-white p-12 text-center">
+
+            <h3 className="text-xl font-semibold">
+              No companies found
+            </h3>
+
+            <p className="mt-2 text-slate-500">
+              Try changing your search or filters.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+
+            {filteredCompanies.map((company) => (
+              <CompanyCard
+                key={company.id}
+                company={company}
+              />
+            ))}
+
+          </div>
+
+        )}
+
+      </section>
+
     </main>
-  );
-}
-
-export default function CompanyIntelligencePage() {
-  return (
-    <SearchParamsBoundary>
-      <CompanyIntelligenceContent />
-    </SearchParamsBoundary>
   );
 }

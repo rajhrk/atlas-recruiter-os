@@ -1,0 +1,803 @@
+import { AtlasCompany } from "@/types/company";
+
+export const operators: AtlasCompany[] = [
+  {
+    id: "digital-realty",
+    name: "Digital Realty",
+    aliases: ["DLR", "Digital Realty Trust"],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Austin, Texas, USA",
+    regions: ["Global"],
+    dataCenterPresence: [
+      "APAC",
+      "EMEA",
+      "North America",
+      "South America",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Enterprise",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.digitalrealty.com",
+    coreTechnologies: [
+      "Data Center Infrastructure",
+      "Critical Facilities",
+      "Power Systems",
+      "Cooling Systems",
+      "Connectivity",
+      "AI Infrastructure",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "ABB",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Technician",
+      "Data Center Operations Manager",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit mission-critical data center professionals with hyperscale, colocation, critical facilities and AI infrastructure experience.",
+    recruiterNotes:
+      "Global data center platform with extensive hyperscale, colocation, cloud and enterprise infrastructure.",
+  },
+
+  {
+    id: "vantage-data-centers",
+    name: "Vantage Data Centers",
+    aliases: ["Vantage"],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Denver, Colorado, USA",
+    regions: ["Global"],
+    dataCenterPresence: [
+      "North America",
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Colocation",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://vantage-dc.com",
+    coreTechnologies: [
+      "Critical Facilities",
+      "Electrical Infrastructure",
+      "Mechanical Systems",
+      "Liquid Cooling",
+      "High Density Computing",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Cummins",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Operations Engineer",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+      "Facility Manager",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit critical facilities and data center operations professionals with hyperscale and high-density infrastructure experience.",
+    recruiterNotes:
+      "Major hyperscale data center developer and operator with a strong focus on large-scale digital infrastructure.",
+  },
+
+  {
+    id: "cyrusone",
+    name: "CyrusOne",
+    aliases: ["CyrusOne Data Centers"],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Dallas, Texas, USA",
+    regions: [
+      "North America",
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterPresence: [
+      "North America",
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.cyrusone.com",
+    coreTechnologies: [
+      "Critical Facilities",
+      "High Density Computing",
+      "Power Systems",
+      "Cooling Systems",
+      "AI Infrastructure",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Cummins",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Technician",
+      "Data Center Operations Manager",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit data center engineers and operations professionals experienced in hyperscale, colocation and high-density AI infrastructure.",
+    recruiterNotes:
+      "Global data center operator with large-scale facilities across North America, EMEA and APAC.",
+  },
+
+  {
+    id: "ntt-global-data-centers",
+    name: "NTT Global Data Centers",
+    aliases: [
+      "NTT GDC",
+      "NTT Global Data Centres",
+      "NTT DATA",
+    ],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "London, United Kingdom",
+    regions: [
+      "APAC",
+      "EMEA",
+      "North America",
+    ],
+    dataCenterPresence: [
+      "APAC",
+      "EMEA",
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Enterprise",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.global.ntt",
+    coreTechnologies: [
+      "Critical Facilities",
+      "Data Center Operations",
+      "Power Systems",
+      "Cooling",
+      "Cloud Connectivity",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+      "ABB",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Operations Engineer",
+      "Facility Manager",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit mission-critical data center professionals across NTT's global colocation and hyperscale infrastructure.",
+    recruiterNotes:
+      "Global data center platform spanning multiple regions with strong enterprise, hyperscale and cloud customer exposure.",
+  },
+
+  {
+    id: "qts-data-centers",
+    name: "QTS Data Centers",
+    aliases: ["QTS"],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Overland Park, Kansas, USA",
+    regions: ["North America"],
+    dataCenterPresence: [
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Enterprise",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.qtsdatacenters.com",
+    coreTechnologies: [
+      "Critical Facilities",
+      "Power Infrastructure",
+      "Cooling Systems",
+      "High Density Computing",
+      "Data Center Automation",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Cummins",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Technician",
+      "Facility Manager",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit data center operations, critical facilities and commissioning professionals with hyperscale and high-density experience.",
+    recruiterNotes:
+      "Major North American data center owner and operator serving hyperscale, enterprise and cloud customers.",
+  },
+
+  {
+    id: "stt-gdc",
+    name: "ST Telemedia Global Data Centres",
+    aliases: [
+      "STT GDC",
+      "ST Telemedia GDC",
+    ],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Singapore",
+    regions: [
+      "APAC",
+      "EMEA",
+      "North America",
+    ],
+    dataCenterPresence: [
+      "APAC",
+      "EMEA",
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Enterprise",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.sttelemediagdc.com",
+    coreTechnologies: [
+      "Critical Facilities",
+      "Power Systems",
+      "Cooling",
+      "Data Center Operations",
+      "Cloud Connectivity",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "ABB",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Operations Manager",
+      "Facility Manager",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit data center professionals across APAC, EMEA and North American colocation and hyperscale operations.",
+    recruiterNotes:
+      "Important global operator with strong APAC presence and growing hyperscale and AI infrastructure requirements.",
+  },
+
+  {
+    id: "stack-infrastructure",
+    name: "STACK Infrastructure",
+    aliases: ["STACK"],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Denver, Colorado, USA",
+    regions: [
+      "North America",
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterPresence: [
+      "North America",
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Colocation",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.stackinfra.com",
+    coreTechnologies: [
+      "Data Center Development",
+      "Critical Facilities",
+      "High Density Computing",
+      "AI Infrastructure",
+      "Power Systems",
+      "Cooling",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+      "Cummins",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Construction Manager",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+      "Facility Manager",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit professionals experienced in hyperscale data center development, construction, commissioning and operations.",
+    recruiterNotes:
+      "Strong hyperscale infrastructure and development focus with significant AI/ML and cloud density requirements.",
+  },
+
+  {
+    id: "iron-mountain-data-centers",
+    name: "Iron Mountain Data Centers",
+    aliases: [
+      "Iron Mountain",
+      "Iron Mountain Data Center",
+    ],
+    companyType: "Colocation Provider",
+    priority: "Tier 2",
+    categoryIds: ["colocation"],
+    headquarters: "Boston, Massachusetts, USA",
+    regions: [
+      "North America",
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterPresence: [
+      "North America",
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Enterprise",
+      "Edge",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.ironmountain.com/data-centers",
+    coreTechnologies: [
+      "Critical Facilities",
+      "Power Systems",
+      "Cooling",
+      "Liquid Cooling",
+      "High Density Computing",
+      "Connectivity",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Cummins",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Technician",
+      "Data Center Operations Manager",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: [
+      "CDCP",
+      "CDCS",
+      "ISO 27001",
+    ],
+    aiPrompt:
+      "Recruit critical facilities and data center operations professionals across colocation, enterprise, hyperscale and AI-ready infrastructure.",
+    recruiterNotes:
+      "Global colocation provider with enterprise, hyperscale, edge and AI-ready infrastructure.",
+  },
+
+  {
+    id: "global-switch",
+    name: "Global Switch",
+    aliases: ["Global Switch Data Centres"],
+    companyType: "Colocation Provider",
+    priority: "Tier 2",
+    categoryIds: ["colocation"],
+    headquarters: "London, United Kingdom",
+    regions: [
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterPresence: [
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Enterprise",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.globalswitch.com",
+    coreTechnologies: [
+      "Critical Facilities",
+      "Power Systems",
+      "Cooling",
+      "Connectivity",
+      "Liquid Cooling",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Technician",
+      "Facility Manager",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit data center operations and critical facilities professionals with colocation, power, cooling and connectivity experience.",
+    recruiterNotes:
+      "Established European and Asian data center operator with enterprise, cloud and AI workload exposure.",
+  },
+
+  {
+    id: "gds",
+    name: "GDS Services",
+    aliases: [
+      "GDS",
+      "GDS Holdings",
+    ],
+    companyType: "Colocation Provider",
+    priority: "Tier 2",
+    categoryIds: ["colocation"],
+    headquarters: "Shanghai, China",
+    regions: [
+      "APAC",
+    ],
+    dataCenterPresence: [
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Enterprise",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.gds-services.com",
+    coreTechnologies: [
+      "High Density Data Centers",
+      "Critical Facilities",
+      "Cloud Infrastructure",
+      "Cooling Systems",
+      "Data Center Operations",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Operations Engineer",
+      "Facility Manager",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit data center professionals with large-scale, high-density, cloud and colocation experience in the Asia-Pacific market.",
+    recruiterNotes:
+      "Major Chinese data center operator focused on large-scale infrastructure, cloud, enterprise and internet customers.",
+  },
+
+  {
+    id: "cologix",
+    name: "Cologix",
+    aliases: ["Cologix Data Centers"],
+    companyType: "Colocation Provider",
+    priority: "Tier 2",
+    categoryIds: ["colocation"],
+    headquarters: "Denver, Colorado, USA",
+    regions: [
+      "North America",
+    ],
+    dataCenterPresence: [
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Edge",
+      "Enterprise",
+      "Cloud",
+    ],
+    website: "https://www.cologix.com",
+    coreTechnologies: [
+      "Colocation",
+      "Network Connectivity",
+      "Critical Facilities",
+      "Power Systems",
+      "Cooling",
+      "Edge Infrastructure",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "ABB",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Technician",
+      "Data Center Operations Manager",
+      "Network Engineer",
+      "Electrical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit data center and network infrastructure professionals with colocation, edge and connectivity experience.",
+    recruiterNotes:
+      "North American colocation and interconnection provider with strong network-dense market presence.",
+  },
+
+  {
+    id: "colt-data-centre-services",
+    name: "Colt Data Centre Services",
+    aliases: [
+      "Colt DCS",
+      "Colt Data Centres",
+    ],
+    companyType: "Colocation Provider",
+    priority: "Tier 2",
+    categoryIds: ["colocation"],
+    headquarters: "London, United Kingdom",
+    regions: [
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterPresence: [
+      "EMEA",
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Colocation",
+      "Hyperscale",
+      "Enterprise",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.coltdatacentres.net",
+    coreTechnologies: [
+      "Critical Facilities",
+      "Power Infrastructure",
+      "Cooling",
+      "Cloud Connectivity",
+      "High Density Computing",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Operations Engineer",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+      "Facility Manager",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit mission-critical data center professionals with hyperscale, colocation and high-density infrastructure experience.",
+    recruiterNotes:
+      "European and APAC data center operator focused on hyperscale, enterprise, cloud and high-density workloads.",
+  },
+
+  {
+    id: "edgeconnex",
+    name: "EdgeConneX",
+    aliases: ["EdgeConneX Data Centers"],
+    companyType: "Colocation Provider",
+    priority: "Tier 2",
+    categoryIds: ["colocation", "edge"],
+    headquarters: "Herndon, Virginia, USA",
+    regions: [
+      "North America",
+      "EMEA",
+      "APAC",
+      "South America",
+    ],
+    dataCenterPresence: [
+      "North America",
+      "EMEA",
+      "APAC",
+      "South America",
+    ],
+    dataCenterTypes: [
+      "Edge",
+      "Colocation",
+      "Hyperscale",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.edgeconnex.com",
+    coreTechnologies: [
+      "Edge Computing",
+      "Critical Facilities",
+      "Power Systems",
+      "Cooling",
+      "Cloud Connectivity",
+      "AI Infrastructure",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Operations Engineer",
+      "Edge Data Center Engineer",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit data center engineers with edge, hyperscale, cloud and mission-critical infrastructure experience.",
+    recruiterNotes:
+      "Strong edge and hyperscale data center focus with distributed infrastructure requirements.",
+  },
+
+  {
+    id: "switch",
+    name: "Switch",
+    aliases: [
+      "Switch Data Centers",
+      "SUPERNAP",
+    ],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Las Vegas, Nevada, USA",
+    regions: [
+      "North America",
+    ],
+    dataCenterPresence: [
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Colocation",
+      "Enterprise",
+      "Edge",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.switch.com",
+    coreTechnologies: [
+      "High Density Computing",
+      "Liquid Cooling",
+      "AI Infrastructure",
+      "Edge Data Centers",
+      "Critical Facilities",
+      "Power Systems",
+    ],
+    strategicVendors: [
+      "NVIDIA",
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Engineer",
+      "AI Infrastructure Engineer",
+      "Edge Data Center Engineer",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit engineers experienced in high-density AI factories, hyperscale data centers, liquid cooling and edge infrastructure.",
+    recruiterNotes:
+      "Strong AI infrastructure and high-density data center focus, including edge and large-scale facilities.",
+  },
+
+  {
+    id: "airtrunk",
+    name: "AirTrunk",
+    aliases: ["AirTrunk Data Centres"],
+    companyType: "Colocation Provider",
+    priority: "Tier 1",
+    categoryIds: ["colocation"],
+    headquarters: "Sydney, Australia",
+    regions: [
+      "APAC",
+    ],
+    dataCenterPresence: [
+      "APAC",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Colocation",
+      "Cloud",
+      "AI",
+    ],
+    website: "https://www.airtrunk.com",
+    coreTechnologies: [
+      "Hyperscale Data Centers",
+      "Critical Facilities",
+      "Power Infrastructure",
+      "Cooling",
+      "High Density Computing",
+      "AI Infrastructure",
+    ],
+    strategicVendors: [
+      "Schneider Electric",
+      "Vertiv",
+      "Siemens",
+      "Cummins",
+    ],
+    roles: [
+      "Critical Facilities Engineer",
+      "Data Center Operations Engineer",
+      "Commissioning Engineer",
+      "Electrical Engineer",
+      "Mechanical Engineer",
+      "Facility Manager",
+    ],
+    certifications: ["CDCP", "CDCS"],
+    aiPrompt:
+      "Recruit hyperscale data center professionals with critical facilities, commissioning, electrical, mechanical and high-density infrastructure experience across APAC.",
+    recruiterNotes:
+      "Major APAC hyperscale data center platform with strong growth across Australia and Asia.",
+  },
+];
+
+export default operators;

@@ -17,17 +17,17 @@ export default function RecruiterDashboard() {
     (c) => c.companyType === "Hyperscaler"
   );
 
-  const colocation = companyMaster.filter(
-    (c) => c.companyType === "Colocation"
-  );
+ const colocation = companyMaster.filter(
+  (c) => c.companyType === "Colocation Provider"
+);
 
   const oems = companyMaster.filter(
     (c) => c.companyType === "OEM"
   );
 
-  const epc = companyMaster.filter(
-    (c) => c.companyType === "EPC"
-  );
+ const epc = companyMaster.filter(
+  (c) => c.companyType === "Construction"
+);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-8">

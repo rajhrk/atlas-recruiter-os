@@ -6,10 +6,20 @@ export const hyperscalers: AtlasCompany[] = [
     name: "Amazon Web Services",
     aliases: ["AWS", "Amazon"],
     companyType: "Hyperscaler",
+    priority: "Tier 1",
     categoryIds: ["hyperscaler"],
     headquarters: "Seattle, Washington, USA",
     regions: ["Global"],
-    dataCenterPresence: ["APAC", "EMEA", "North America", "South America"],
+    dataCenterPresence: [
+      "APAC",
+      "EMEA",
+      "North America",
+      "South America",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Cloud",
+    ],
     website: "https://aws.amazon.com",
     coreTechnologies: [
       "AWS",
@@ -34,7 +44,10 @@ export const hyperscalers: AtlasCompany[] = [
       "Mechanical Engineer",
       "Electrical Engineer",
     ],
-    certifications: ["CDCP", "CDCS"],
+    certifications: [
+      "CDCP",
+      "CDCS",
+    ],
     aiPrompt:
       "Recruit experienced mission-critical data centre engineers with hyperscale operations experience for AWS infrastructure.",
     recruiterNotes:
@@ -46,10 +59,20 @@ export const hyperscalers: AtlasCompany[] = [
     name: "Microsoft",
     aliases: ["Azure", "Microsoft Azure"],
     companyType: "Hyperscaler",
+    priority: "Tier 1",
     categoryIds: ["hyperscaler"],
     headquarters: "Redmond, Washington, USA",
     regions: ["Global"],
-    dataCenterPresence: ["APAC", "EMEA", "North America"],
+    dataCenterPresence: [
+      "APAC",
+      "EMEA",
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Cloud",
+      "AI",
+    ],
     website: "https://www.microsoft.com",
     coreTechnologies: [
       "Azure",
@@ -69,7 +92,10 @@ export const hyperscalers: AtlasCompany[] = [
       "Data Center Technician",
       "Facility Manager",
     ],
-    certifications: ["CDCP", "CDCS"],
+    certifications: [
+      "CDCP",
+      "CDCS",
+    ],
     aiPrompt:
       "Recruit experienced Critical Facilities Engineers from hyperscalers, colocation providers and enterprise data centres.",
     recruiterNotes:
@@ -81,10 +107,20 @@ export const hyperscalers: AtlasCompany[] = [
     name: "Google",
     aliases: ["Google Cloud", "GCP"],
     companyType: "Hyperscaler",
+    priority: "Tier 1",
     categoryIds: ["hyperscaler"],
     headquarters: "Mountain View, California, USA",
     regions: ["Global"],
-    dataCenterPresence: ["APAC", "EMEA", "North America"],
+    dataCenterPresence: [
+      "APAC",
+      "EMEA",
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "Cloud",
+      "AI",
+    ],
     website: "https://cloud.google.com",
     coreTechnologies: [
       "Google Cloud",
@@ -102,7 +138,9 @@ export const hyperscalers: AtlasCompany[] = [
       "Data Center Technician",
       "Controls Engineer",
     ],
-    certifications: ["CDCP"],
+    certifications: [
+      "CDCP",
+    ],
     aiPrompt:
       "Recruit engineers experienced in hyperscale operations and critical environments for Google Cloud.",
     recruiterNotes:
@@ -114,10 +152,19 @@ export const hyperscalers: AtlasCompany[] = [
     name: "Meta",
     aliases: ["Facebook", "Meta Platforms"],
     companyType: "Hyperscaler",
+    priority: "Tier 1",
     categoryIds: ["hyperscaler"],
     headquarters: "Menlo Park, California, USA",
     regions: ["Global"],
-    dataCenterPresence: ["APAC", "EMEA", "North America"],
+    dataCenterPresence: [
+      "APAC",
+      "EMEA",
+      "North America",
+    ],
+    dataCenterTypes: [
+      "Hyperscale",
+      "AI",
+    ],
     website: "https://about.meta.com",
     coreTechnologies: [
       "Critical Facilities",
@@ -135,10 +182,14 @@ export const hyperscalers: AtlasCompany[] = [
       "Data Center Technician",
       "Site Operations Engineer",
     ],
-    certifications: ["CDCP"],
+    certifications: [
+      "CDCP",
+    ],
     aiPrompt:
       "Recruit mission-critical facility engineers with hyperscale operations experience for Meta infrastructure.",
     recruiterNotes:
       "Open Compute expertise is highly valued.",
   },
 ];
+
+export default hyperscalers;

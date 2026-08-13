@@ -33,11 +33,9 @@ export default async function HiringGuidePage({
     <IntelligencePage
 
       header={
-        <IntelligenceHeader
-          title={hiringGuide.role}
-          category={hiringGuide.category}
-          summary={hiringGuide.overview}
-        />
+       <IntelligenceHeader
+  title={hiringGuide.role}
+/>
       }
 
       stats={
@@ -53,11 +51,11 @@ export default async function HiringGuidePage({
             },
             {
               label: "Companies",
-              value: hiringGuide.targetCompanies.length,
+             value: hiringGuide.targetCompanies?.length ?? 0,
             },
             {
               label: "Skills",
-              value: hiringGuide.mustHaveSkills.length,
+              value: hiringGuide.mustHaveSkills?.length ?? 0,
             },
           ]}
         />
@@ -80,7 +78,7 @@ export default async function HiringGuidePage({
             },
             {
               label: "Certifications",
-              value: hiringGuide.certifications.length.toString(),
+            value: (hiringGuide.certifications?.length ?? 0).toString(),
             },
           ]}
         />
@@ -92,45 +90,37 @@ export default async function HiringGuidePage({
 
         <ul className="list-disc space-y-2 pl-6">
 
-          {hiringGuide.whyHireIsDifficult.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
+         
 
         </ul>
 
       </IntelligenceSection>
 
       <Timeline
-        title="Career Path"
-        items={hiringGuide.careerPath}
-      />
-
-      <BadgeGrid
-        title="Must Have Skills"
-        badges={hiringGuide.mustHaveSkills}
-      />
-
-      <BadgeGrid
-        title="Nice To Have Skills"
-        badges={hiringGuide.niceToHaveSkills}
-      />
+  title="Career Path"
+  items={
+    hiringGuide.careerPath?.map((item) =>
+      typeof item === "string"
+        ? item
+        : item.title
+    ) ?? []
+  }
+/>
 
       <CompanyGrid
-        title="Target Companies"
-        companies={hiringGuide.targetCompanies}
-      />
+  title="Target Companies"
+  companies={hiringGuide.targetCompanies ?? []}
+/>
 
-      <RecruiterNotesCard
-        notes={hiringGuide.recruiterTips}
-      />
+<RecruiterNotesCard
+  notes={hiringGuide.recruiterNotes?.join("\n") ?? ""}
+/>
 
-      <BooleanCard
-        examples={hiringGuide.booleanExamples}
-      />
+     
 
       <AIPromptCard
-        prompt={hiringGuide.aiPrompt}
-      />
+  prompt={hiringGuide.aiPrompt ?? ""}
+/>
 
     </IntelligencePage>
 
