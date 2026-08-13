@@ -1,5 +1,6 @@
 import AtlasHeader from "@/components/atlas/AtlasHeader";
 import HardwareRoleExplorer from "@/components/technicalTalent/HardwareRoleExplorer";
+import HardwareTechnicalTalentOverview from "@/components/technicalTalent/HardwareTechnicalTalentOverview";
 import { hardwareDomain } from "@/data/technicalTalent/hardware";
 
 export default function HardwareTechnicalTalentPage() {
@@ -8,6 +9,10 @@ export default function HardwareTechnicalTalentPage() {
       <AtlasHeader
         title="Hardware / Embedded Technical Talent Intelligence"
         description="Technical talent intelligence for sourcing embedded engineers, firmware engineers, embedded Linux specialists, BSP and device-driver engineers, hardware engineers, platform engineers, and hardware validation talent."
+      />
+
+      <HardwareTechnicalTalentOverview
+        domain={hardwareDomain}
       />
 
       <section className="space-y-4">
