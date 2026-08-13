@@ -45,10 +45,22 @@ export default function TechnicalTalentOverview({
   );
 
   const stats = [
-    { label: "Roles", value: domain.roles.length },
-    { label: "Role Families", value: roleFamilies.length },
-    { label: "Companies", value: companies.length },
-    { label: "Boolean Strings", value: domain.booleanLibrary.length },
+    {
+      label: "Roles",
+      value: domain.roles.length,
+    },
+    {
+      label: "Role Families",
+      value: roleFamilies.length,
+    },
+    {
+      label: "Companies",
+      value: companies.length,
+    },
+    {
+      label: "Boolean Strings",
+      value: domain.booleanLibrary.length,
+    },
   ];
 
   return (
@@ -67,7 +79,10 @@ export default function TechnicalTalentOverview({
                 key={family}
                 className="rounded-lg border bg-slate-50 p-4"
               >
-                <div className="font-medium text-slate-900">{family}</div>
+                <div className="font-medium text-slate-900">
+                  {family}
+                </div>
+
                 <div className="mt-1 text-sm text-muted-foreground">
                   {count} role{count === 1 ? "" : "s"}
                 </div>
@@ -97,7 +112,10 @@ export default function TechnicalTalentOverview({
                 key={area}
                 className="rounded-lg border bg-slate-50 p-4"
               >
-                <div className="font-medium text-slate-900">{area}</div>
+                <div className="font-medium text-slate-900">
+                  {area}
+                </div>
+
                 <div className="mt-1 text-sm text-muted-foreground">
                   {count} role{count === 1 ? "" : "s"}
                 </div>
@@ -119,6 +137,7 @@ export default function TechnicalTalentOverview({
                   <div className="font-semibold text-slate-900">
                     {company.company}
                   </div>
+
                   <div className="mt-1 text-sm text-muted-foreground">
                     {company.region}
                   </div>
@@ -128,7 +147,9 @@ export default function TechnicalTalentOverview({
                   company.commonTitles.length > 0 && (
                     <div className="text-sm text-muted-foreground">
                       {company.commonTitles.length} common title
-                      {company.commonTitles.length === 1 ? "" : "s"}
+                      {company.commonTitles.length === 1
+                        ? ""
+                        : "s"}
                     </div>
                   )}
               </div>
@@ -142,6 +163,7 @@ export default function TechnicalTalentOverview({
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Sourcing Keywords
                   </div>
+
                   <TagList items={company.sourcingKeywords} />
                 </div>
               )}
@@ -162,6 +184,7 @@ export default function TechnicalTalentOverview({
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Research Areas
             </h3>
+
             <TagList items={researchAreas} />
           </div>
 
@@ -174,6 +197,7 @@ export default function TechnicalTalentOverview({
                 <h3 className="font-semibold text-slate-900">
                   {landscape.region}
                 </h3>
+
                 <div className="text-sm text-muted-foreground">
                   {landscape.companies.length} companies ·{" "}
                   {landscape.researchOrganizations.length} research
@@ -186,6 +210,7 @@ export default function TechnicalTalentOverview({
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Companies
                   </div>
+
                   <TagList items={landscape.companies} />
                 </div>
 
@@ -193,7 +218,10 @@ export default function TechnicalTalentOverview({
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Research Organizations
                   </div>
-                  <TagList items={landscape.researchOrganizations} />
+
+                  <TagList
+                    items={landscape.researchOrganizations}
+                  />
                 </div>
 
                 {landscape.universities &&
@@ -202,6 +230,7 @@ export default function TechnicalTalentOverview({
                       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Universities
                       </div>
+
                       <TagList items={landscape.universities} />
                     </div>
                   )}
@@ -211,7 +240,10 @@ export default function TechnicalTalentOverview({
                     <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Sourcing Sources
                     </div>
-                    <TagList items={landscape.sourcingSources} />
+
+                    <TagList
+                      items={landscape.sourcingSources}
+                    />
                   </div>
                 )}
               </div>
@@ -232,41 +264,57 @@ export default function TechnicalTalentOverview({
               </h3>
 
               <div className="space-y-4">
-                {landscape.researcherSignals?.length ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Researcher Signals
-                    </div>
-                    <TagList items={landscape.researcherSignals} />
-                  </div>
-                ) : null}
+                {landscape.researcherSignals &&
+                  landscape.researcherSignals.length > 0 && (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Researcher Signals
+                      </div>
 
-                {landscape.publicationSignals?.length ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Publication Signals
+                      <TagList
+                        items={landscape.researcherSignals}
+                      />
                     </div>
-                    <TagList items={landscape.publicationSignals} />
-                  </div>
-                ) : null}
+                  )}
 
-                {landscape.conferenceSignals?.length ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Conference Signals
-                    </div>
-                    <TagList items={landscape.conferenceSignals} />
-                  </div>
-                ) : null}
+                {landscape.publicationSignals &&
+                  landscape.publicationSignals.length > 0 && (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Publication Signals
+                      </div>
 
-                {landscape.openSourceSignals?.length ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Open Source Signals
+                      <TagList
+                        items={landscape.publicationSignals}
+                      />
                     </div>
-                    <TagList items={landscape.openSourceSignals} />
-                  </div>
-                ) : null}
+                  )}
+
+                {landscape.conferenceSignals &&
+                  landscape.conferenceSignals.length > 0 && (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Conference Signals
+                      </div>
+
+                      <TagList
+                        items={landscape.conferenceSignals}
+                      />
+                    </div>
+                  )}
+
+                {landscape.openSourceSignals &&
+                  landscape.openSourceSignals.length > 0 && (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Open Source Signals
+                      </div>
+
+                      <TagList
+                        items={landscape.openSourceSignals}
+                      />
+                    </div>
+                  )}
               </div>
             </div>
           ))}
@@ -285,6 +333,7 @@ export default function TechnicalTalentOverview({
                   <div className="font-semibold text-slate-900">
                     {entry.name}
                   </div>
+
                   <div className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
                     {entry.category}
                   </div>
@@ -309,6 +358,7 @@ export default function TechnicalTalentOverview({
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Conferences
             </h3>
+
             <TagList items={domain.conferences} />
           </div>
 
@@ -316,6 +366,7 @@ export default function TechnicalTalentOverview({
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Research Sources
             </h3>
+
             <TagList items={domain.researchSources} />
           </div>
 
@@ -323,6 +374,7 @@ export default function TechnicalTalentOverview({
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Developer Sources
             </h3>
+
             <TagList items={domain.developerSources} />
           </div>
         </div>
@@ -331,6 +383,7 @@ export default function TechnicalTalentOverview({
           <h3 className="mb-3 text-sm font-semibold text-slate-900">
             Patent Sources
           </h3>
+
           <TagList items={domain.patentSources} />
         </div>
       </IntelligenceSection>
