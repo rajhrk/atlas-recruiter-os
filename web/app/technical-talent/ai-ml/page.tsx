@@ -11,22 +11,26 @@ export default function AIMLTechnicalTalentPage() {
         description="Technical talent intelligence for sourcing AI, machine learning, recommender systems, research, and applied AI professionals."
       />
 
-      <TechnicalTalentOverview domain={aiMlDomain} />
-
-      <div className="space-y-4">
+      {/* Primary recruiter workspace */}
+      <section className="space-y-4">
         <div>
-          <h2 className="text-2xl font-semibold">
+          <h2 className="text-2xl font-semibold text-slate-900">
             Role Explorer
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Explore AI / ML roles by technical family, skills,
-            technologies, research areas, and sourcing signals.
+            Explore AI / ML roles by technical family and drill
+            into the skills, technologies, companies, research
+            areas, conferences, Boolean keywords, and recruiter
+            signals associated with each role.
           </p>
         </div>
 
         <RoleFamilyExplorer roles={aiMlDomain.roles} />
-      </div>
+      </section>
+
+      {/* Supporting intelligence */}
+      <TechnicalTalentOverview domain={aiMlDomain} />
     </div>
   );
 }

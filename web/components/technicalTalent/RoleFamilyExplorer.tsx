@@ -22,6 +22,24 @@ function TagList({ items }: { items: string[] }) {
   );
 }
 
+function DetailSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h4>
+
+      {children}
+    </div>
+  );
+}
+
 export default function RoleFamilyExplorer({ roles }: Props) {
   const families = useMemo(
     () => Array.from(new Set(roles.map((role) => role.family))),
@@ -29,6 +47,9 @@ export default function RoleFamilyExplorer({ roles }: Props) {
   );
 
   const [selectedFamily, setSelectedFamily] = useState<string>("All");
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(
+    null,
+  );
 
   const filteredRoles = useMemo(() => {
     if (selectedFamily === "All") {
@@ -38,155 +59,194 @@ export default function RoleFamilyExplorer({ roles }: Props) {
     return roles.filter((role) => role.family === selectedFamily);
   }, [roles, selectedFamily]);
 
+  const selectedRole = useMemo(() => {
+    if (!selectedRoleId) {
+      return filteredRoles[0] ?? null;
+    }
+
+    return (
+      filteredRoles.find((role) => role.id === selectedRoleId) ??
+      filteredRoles[0] ??
+      null
+    );
+  }, [filteredRoles, selectedRoleId]);
+
+  function handleFamilyChange(family: string) {
+    setSelectedFamily(family);
+    setSelectedRoleId(null);
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setSelectedFamily("All")}
-          className={`rounded-full border px-4 py-2 text-sm transition ${
-            selectedFamily === "All"
-              ? "bg-blue-600 text-white"
-              : "bg-white hover:bg-slate-50"
-          }`}
-        >
-          All
-        </button>
+      {/* Role Family Filter */}
+      <div>
+        <div className="mb-3 text-sm font-semibold text-slate-900">
+          Role Family
+        </div>
 
-        {families.map((family) => (
+        <div className="flex flex-wrap gap-2">
           <button
-            key={family}
-            onClick={() => setSelectedFamily(family)}
+            onClick={() => handleFamilyChange("All")}
             className={`rounded-full border px-4 py-2 text-sm transition ${
-              selectedFamily === family
+              selectedFamily === "All"
                 ? "bg-blue-600 text-white"
                 : "bg-white hover:bg-slate-50"
             }`}
           >
-            {family}
+            All
           </button>
-        ))}
+
+          {families.map((family) => (
+            <button
+              key={family}
+              onClick={() => handleFamilyChange(family)}
+              className={`rounded-full border px-4 py-2 text-sm transition ${
+                selectedFamily === family
+                  ? "bg-blue-600 text-white"
+                  : "bg-white hover:bg-slate-50"
+              }`}
+            >
+              {family}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* Result Count */}
       <div className="text-sm text-muted-foreground">
-        Showing {filteredRoles.length} role
+        {filteredRoles.length} role
         {filteredRoles.length === 1 ? "" : "s"}
-        {selectedFamily !== "All" ? ` in ${selectedFamily}` : ""}
+        {selectedFamily !== "All"
+          ? ` in ${selectedFamily}`
+          : ""}
       </div>
 
-      <div className="space-y-4">
-        {filteredRoles.map((role) => (
-          <div
-            key={role.id}
-            className="rounded-xl border bg-white p-5 shadow-sm"
-          >
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">
+      {/* Role Selection + Intelligence */}
+      {filteredRoles.length > 0 && selectedRole ? (
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          {/* Role List */}
+          <div className="space-y-2">
+            <div className="mb-3 text-sm font-semibold text-slate-900">
+              Roles
+            </div>
+
+            {filteredRoles.map((role) => (
+              <button
+                key={role.id}
+                onClick={() => setSelectedRoleId(role.id)}
+                className={`w-full rounded-lg border p-4 text-left transition ${
+                  selectedRole.id === role.id
+                    ? "border-blue-500 bg-blue-50"
+                    : "bg-white hover:bg-slate-50"
+                }`}
+              >
+                <div className="font-medium text-slate-900">
                   {role.title}
+                </div>
+
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {role.seniority
+                    ? role.seniority
+                    : role.normalizedTitle}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Selected Role */}
+          <div className="rounded-xl border bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-3 border-b pb-5 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  {selectedRole.title}
                 </h3>
 
                 <div className="mt-1 text-sm text-muted-foreground">
-                  {role.family}
-                  {role.seniority ? ` · ${role.seniority}` : ""}
+                  {selectedRole.family}
+                  {selectedRole.seniority
+                    ? ` · ${selectedRole.seniority}`
+                    : ""}
                 </div>
               </div>
 
               <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                {role.normalizedTitle}
+                {selectedRole.normalizedTitle}
               </div>
             </div>
 
-            {role.aliases.length > 0 && (
-              <div className="mt-5">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Title Aliases
-                </div>
-
-                <TagList items={role.aliases} />
-              </div>
-            )}
-
-            {role.skills.length > 0 && (
-              <div className="mt-5">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Skills
-                </div>
-
-                <TagList items={role.skills} />
-              </div>
-            )}
-
-            {role.technologies.length > 0 && (
-              <div className="mt-5">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Technologies
-                </div>
-
-                <TagList items={role.technologies} />
-              </div>
-            )}
-
-            {role.researchAreas &&
-              role.researchAreas.length > 0 && (
-                <div className="mt-5">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Research Areas
-                  </div>
-
-                  <TagList items={role.researchAreas} />
-                </div>
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              {selectedRole.aliases.length > 0 && (
+                <DetailSection title="Title Aliases">
+                  <TagList items={selectedRole.aliases} />
+                </DetailSection>
               )}
 
-            {role.targetCompanies &&
-              role.targetCompanies.length > 0 && (
-                <div className="mt-5">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Target Companies
-                  </div>
-
-                  <TagList items={role.targetCompanies} />
-                </div>
+              {selectedRole.skills.length > 0 && (
+                <DetailSection title="Skills">
+                  <TagList items={selectedRole.skills} />
+                </DetailSection>
               )}
 
-            {role.conferences &&
-              role.conferences.length > 0 && (
-                <div className="mt-5">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Conferences
-                  </div>
-
-                  <TagList items={role.conferences} />
-                </div>
+              {selectedRole.technologies.length > 0 && (
+                <DetailSection title="Technologies">
+                  <TagList items={selectedRole.technologies} />
+                </DetailSection>
               )}
 
-            {role.booleanKeywords &&
-              role.booleanKeywords.length > 0 && (
-                <div className="mt-5">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Boolean Keywords
-                  </div>
+              {selectedRole.researchAreas &&
+                selectedRole.researchAreas.length > 0 && (
+                  <DetailSection title="Research Areas">
+                    <TagList items={selectedRole.researchAreas} />
+                  </DetailSection>
+                )}
 
-                  <TagList items={role.booleanKeywords} />
-                </div>
-              )}
+              {selectedRole.targetCompanies &&
+                selectedRole.targetCompanies.length > 0 && (
+                  <DetailSection title="Target Companies">
+                    <TagList
+                      items={selectedRole.targetCompanies}
+                    />
+                  </DetailSection>
+                )}
 
-            {role.recruiterNotes &&
-              role.recruiterNotes.length > 0 && (
-                <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              {selectedRole.conferences &&
+                selectedRole.conferences.length > 0 && (
+                  <DetailSection title="Conferences">
+                    <TagList items={selectedRole.conferences} />
+                  </DetailSection>
+                )}
+
+              {selectedRole.booleanKeywords &&
+                selectedRole.booleanKeywords.length > 0 && (
+                  <DetailSection title="Boolean Keywords">
+                    <TagList
+                      items={selectedRole.booleanKeywords}
+                    />
+                  </DetailSection>
+                )}
+            </div>
+
+            {selectedRole.recruiterNotes &&
+              selectedRole.recruiterNotes.length > 0 && (
+                <div className="mt-6 rounded-lg bg-slate-50 p-4">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Recruiter Notes
                   </div>
 
                   <ul className="space-y-2 text-sm leading-6 text-slate-700">
-                    {role.recruiterNotes.map((note) => (
+                    {selectedRole.recruiterNotes.map((note) => (
                       <li key={note}>• {note}</li>
                     ))}
                   </ul>
                 </div>
               )}
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-white p-8 text-center text-sm text-muted-foreground">
+          No roles found for this selection.
+        </div>
+      )}
     </div>
   );
 }

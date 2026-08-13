@@ -21,6 +21,34 @@ function TagList({ items }: { items: string[] }) {
   );
 }
 
+function CollapsibleSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group rounded-xl border bg-white shadow-sm">
+      <summary className="cursor-pointer list-none px-6 py-5">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-xl font-semibold text-slate-900">
+            {title}
+          </h2>
+
+          <span className="text-sm text-muted-foreground transition-transform group-open:rotate-180">
+            ▼
+          </span>
+        </div>
+      </summary>
+
+      <div className="border-t px-6 py-6">
+        {children}
+      </div>
+    </details>
+  );
+}
+
 export default function TechnicalTalentOverview({
   domain,
 }: TechnicalTalentOverviewProps) {
@@ -67,7 +95,7 @@ export default function TechnicalTalentOverview({
     <div className="space-y-6">
       <StatsGrid stats={stats} />
 
-      <IntelligenceSection title="Role Families">
+      <CollapsibleSection title="Role Family Coverage">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {roleFamilies.map((family) => {
             const count = domain.roles.filter(
@@ -90,17 +118,29 @@ export default function TechnicalTalentOverview({
             );
           })}
         </div>
-      </IntelligenceSection>
+      </CollapsibleSection>
 
-      <IntelligenceSection title="Core Skills">
-        <TagList items={domain.coreSkills} />
-      </IntelligenceSection>
+      <CollapsibleSection title="Core Skills & Technologies">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-slate-900">
+              Core Skills
+            </h3>
 
-      <IntelligenceSection title="Core Technologies">
-        <TagList items={domain.coreTechnologies} />
-      </IntelligenceSection>
+            <TagList items={domain.coreSkills} />
+          </div>
 
-      <IntelligenceSection title="Recommender Systems">
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-slate-900">
+              Core Technologies
+            </h3>
+
+            <TagList items={domain.coreTechnologies} />
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Recommender Systems">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {recommenderAreas.map((area) => {
             const count = domain.recommenderRoles.filter(
@@ -123,9 +163,9 @@ export default function TechnicalTalentOverview({
             );
           })}
         </div>
-      </IntelligenceSection>
+      </CollapsibleSection>
 
-      <IntelligenceSection title="Company Landscape">
+      <CollapsibleSection title="Company Landscape">
         <div className="space-y-3">
           {domain.companyLandscape.map((company) => (
             <div
@@ -176,9 +216,9 @@ export default function TechnicalTalentOverview({
             </div>
           ))}
         </div>
-      </IntelligenceSection>
+      </CollapsibleSection>
 
-      <IntelligenceSection title="Research Landscape">
+      <CollapsibleSection title="Research Landscape">
         <div className="space-y-6">
           <div>
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
@@ -250,9 +290,9 @@ export default function TechnicalTalentOverview({
             </div>
           ))}
         </div>
-      </IntelligenceSection>
+      </CollapsibleSection>
 
-      <IntelligenceSection title="Research & Sourcing Signals">
+      <CollapsibleSection title="Research & Sourcing Signals">
         <div className="grid gap-6 md:grid-cols-2">
           {domain.researchLandscape.map((landscape) => (
             <div
@@ -319,9 +359,9 @@ export default function TechnicalTalentOverview({
             </div>
           ))}
         </div>
-      </IntelligenceSection>
+      </CollapsibleSection>
 
-      <IntelligenceSection title="Boolean Library">
+      <CollapsibleSection title="Boolean Library">
         <div className="space-y-4">
           {domain.booleanLibrary.map((entry) => (
             <div
@@ -350,9 +390,9 @@ export default function TechnicalTalentOverview({
             </div>
           ))}
         </div>
-      </IntelligenceSection>
+      </CollapsibleSection>
 
-      <IntelligenceSection title="Knowledge Sources">
+      <CollapsibleSection title="Knowledge Sources">
         <div className="grid gap-6 md:grid-cols-3">
           <div>
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
@@ -386,7 +426,7 @@ export default function TechnicalTalentOverview({
 
           <TagList items={domain.patentSources} />
         </div>
-      </IntelligenceSection>
+      </CollapsibleSection>
     </div>
   );
 }
