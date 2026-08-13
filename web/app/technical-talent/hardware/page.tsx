@@ -1,0 +1,31 @@
+import AtlasHeader from "@/components/atlas/AtlasHeader";
+import HardwareRoleExplorer from "@/components/technicalTalent/HardwareRoleExplorer";
+import { hardwareDomain } from "@/data/technicalTalent/hardware";
+
+export default function HardwareTechnicalTalentPage() {
+  return (
+    <div className="space-y-8">
+      <AtlasHeader
+        title="Hardware / Embedded Technical Talent Intelligence"
+        description="Technical talent intelligence for sourcing embedded engineers, firmware engineers, embedded Linux specialists, BSP and device-driver engineers, hardware engineers, platform engineers, and hardware validation talent."
+      />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Role Explorer
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Explore Hardware / Embedded roles by technical family
+            and drill into skills, technologies, protocols,
+            platforms, related roles, sourcing signals, and
+            recruiter notes.
+          </p>
+        </div>
+
+        <HardwareRoleExplorer roles={hardwareDomain.roles} />
+      </section>
+    </div>
+  );
+}
