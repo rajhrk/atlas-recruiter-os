@@ -1,5 +1,6 @@
 import AtlasHeader from "@/components/atlas/AtlasHeader";
 import RoboticsRoleExplorer from "@/components/technicalTalent/RoboticsRoleExplorer";
+import RoboticsTechnicalTalentOverview from "@/components/technicalTalent/RoboticsTechnicalTalentOverview";
 import { roboticsDomain } from "@/data/technicalTalent/robotics";
 
 export default function RoboticsTechnicalTalentPage() {
@@ -10,6 +11,7 @@ export default function RoboticsTechnicalTalentPage() {
         description="Technical talent intelligence for sourcing robotics engineers, researchers, autonomy specialists, perception engineers, controls engineers, robot learning specialists, and robotics systems talent."
       />
 
+      {/* Primary recruiter workspace */}
       <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">
@@ -26,6 +28,9 @@ export default function RoboticsTechnicalTalentPage() {
 
         <RoboticsRoleExplorer roles={roboticsDomain.roles} />
       </section>
+
+      {/* Supporting intelligence */}
+      <RoboticsTechnicalTalentOverview domain={roboticsDomain} />
     </div>
   );
 }
