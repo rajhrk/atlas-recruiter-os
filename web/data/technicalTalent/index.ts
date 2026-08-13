@@ -11,3 +11,12 @@ export {
   mlBooleanLibrary,
 } from "./aiMl";
 export { talentProfiles } from "./talentProfiles";
+export { roboticsDomain } from "./robotics";
+
+export {
+  roboticsRoles,
+  roboticsSkills,
+  roboticsTechnologies,
+  roboticsResearchLandscape,
+  roboticsBooleanLibrary,
+} from "./robotics";
