@@ -20,3 +20,4 @@ export {
   roboticsResearchLandscape,
   roboticsBooleanLibrary,
 } from "./robotics";
+export { hardwareDomain } from "./hardware";
