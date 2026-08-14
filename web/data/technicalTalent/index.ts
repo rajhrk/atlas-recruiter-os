@@ -21,3 +21,11 @@ export {
   roboticsBooleanLibrary,
 } from "./robotics";
 export { hardwareDomain } from "./hardware";
+export {
+  semiconductorDomain,
+  semiconductorRoles,
+  semiconductorSkills,
+  semiconductorTechnologies,
+  semiconductorResearchLandscape,
+  semiconductorBooleanLibrary,
+} from "./semiconductor";
