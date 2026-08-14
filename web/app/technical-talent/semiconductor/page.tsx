@@ -11,10 +11,7 @@ export default function SemiconductorTechnicalTalentPage() {
         description="Technical talent intelligence for sourcing ASIC, RTL, verification, physical design, DFT, STA, FPGA, SoC architecture, analog/mixed-signal, and silicon validation professionals."
       />
 
-      <SemiconductorTechnicalTalentOverview
-        domain={semiconductorDomain}
-      />
-
+      {/* Primary recruiter workspace */}
       <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">
@@ -33,6 +30,11 @@ export default function SemiconductorTechnicalTalentPage() {
           roles={semiconductorDomain.roles}
         />
       </section>
+
+      {/* Supporting intelligence */}
+      <SemiconductorTechnicalTalentOverview
+        domain={semiconductorDomain}
+      />
     </div>
   );
 }
