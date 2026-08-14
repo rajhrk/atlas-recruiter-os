@@ -1,10 +1,36 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { AIMLRole } from "@/types/aiMl";
+
+export interface SharedRole {
+  id: string;
+  title: string;
+  normalizedTitle: string;
+  family: string;
+  seniority?: string;
+  aliases: string[];
+  skills: string[];
+  technologies: string[];
+
+  researchAreas?: string[];
+  targetCompanies?: string[];
+  conferences?: string[];
+  booleanKeywords?: string[];
+
+  relatedRoles?: string[];
+  sourcingSignals?: string[];
+
+  protocols?: string[];
+  platforms?: string[];
+
+  languages?: string[];
+  methodologies?: string[];
+
+  recruiterNotes?: string[];
+}
 
 interface Props {
-  roles: AIMLRole[];
+  roles: SharedRole[];
 }
 
 function TagList({ items }: { items: string[] }) {
@@ -40,23 +66,26 @@ function DetailSection({
   );
 }
 
-export default function RoleFamilyExplorer({ roles }: Props) {
+export default function SharedRoleExplorer({ roles }: Props) {
   const families = useMemo(
     () => Array.from(new Set(roles.map((role) => role.family))),
     [roles],
   );
 
-  const [selectedFamily, setSelectedFamily] = useState<string>("All");
-  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(
-    null,
-  );
+  const [selectedFamily, setSelectedFamily] =
+    useState<string>("All");
+
+  const [selectedRoleId, setSelectedRoleId] =
+    useState<string | null>(null);
 
   const filteredRoles = useMemo(() => {
     if (selectedFamily === "All") {
       return roles;
     }
 
-    return roles.filter((role) => role.family === selectedFamily);
+    return roles.filter(
+      (role) => role.family === selectedFamily,
+    );
   }, [roles, selectedFamily]);
 
   const selectedRole = useMemo(() => {
@@ -65,7 +94,9 @@ export default function RoleFamilyExplorer({ roles }: Props) {
     }
 
     return (
-      filteredRoles.find((role) => role.id === selectedRoleId) ??
+      filteredRoles.find(
+        (role) => role.id === selectedRoleId,
+      ) ??
       filteredRoles[0] ??
       null
     );
@@ -86,6 +117,7 @@ export default function RoleFamilyExplorer({ roles }: Props) {
 
         <div className="flex flex-wrap gap-2">
           <button
+            type="button"
             onClick={() => handleFamilyChange("All")}
             className={`rounded-full border px-4 py-2 text-sm transition ${
               selectedFamily === "All"
@@ -99,6 +131,7 @@ export default function RoleFamilyExplorer({ roles }: Props) {
           {families.map((family) => (
             <button
               key={family}
+              type="button"
               onClick={() => handleFamilyChange(family)}
               className={`rounded-full border px-4 py-2 text-sm transition ${
                 selectedFamily === family
@@ -121,7 +154,7 @@ export default function RoleFamilyExplorer({ roles }: Props) {
           : ""}
       </div>
 
-      {/* Role Selection + Intelligence */}
+      {/* Role List + Intelligence */}
       {filteredRoles.length > 0 && selectedRole ? (
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           {/* Role List */}
@@ -133,6 +166,7 @@ export default function RoleFamilyExplorer({ roles }: Props) {
             {filteredRoles.map((role) => (
               <button
                 key={role.id}
+                type="button"
                 onClick={() => setSelectedRoleId(role.id)}
                 className={`w-full rounded-lg border p-4 text-left transition ${
                   selectedRole.id === role.id
@@ -145,9 +179,7 @@ export default function RoleFamilyExplorer({ roles }: Props) {
                 </div>
 
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {role.seniority
-                    ? role.seniority
-                    : role.normalizedTitle}
+                  {role.seniority ?? role.normalizedTitle}
                 </div>
               </button>
             ))}
@@ -196,7 +228,9 @@ export default function RoleFamilyExplorer({ roles }: Props) {
               {selectedRole.researchAreas &&
                 selectedRole.researchAreas.length > 0 && (
                   <DetailSection title="Research Areas">
-                    <TagList items={selectedRole.researchAreas} />
+                    <TagList
+                      items={selectedRole.researchAreas}
+                    />
                   </DetailSection>
                 )}
 
@@ -212,7 +246,9 @@ export default function RoleFamilyExplorer({ roles }: Props) {
               {selectedRole.conferences &&
                 selectedRole.conferences.length > 0 && (
                   <DetailSection title="Conferences">
-                    <TagList items={selectedRole.conferences} />
+                    <TagList
+                      items={selectedRole.conferences}
+                    />
                   </DetailSection>
                 )}
 
@@ -221,6 +257,60 @@ export default function RoleFamilyExplorer({ roles }: Props) {
                   <DetailSection title="Boolean Keywords">
                     <TagList
                       items={selectedRole.booleanKeywords}
+                    />
+                  </DetailSection>
+                )}
+
+              {selectedRole.protocols &&
+                selectedRole.protocols.length > 0 && (
+                  <DetailSection title="Protocols / Interfaces">
+                    <TagList
+                      items={selectedRole.protocols}
+                    />
+                  </DetailSection>
+                )}
+
+              {selectedRole.platforms &&
+                selectedRole.platforms.length > 0 && (
+                  <DetailSection title="Platforms">
+                    <TagList
+                      items={selectedRole.platforms}
+                    />
+                  </DetailSection>
+                )}
+
+              {selectedRole.languages &&
+                selectedRole.languages.length > 0 && (
+                  <DetailSection title="Languages">
+                    <TagList
+                      items={selectedRole.languages}
+                    />
+                  </DetailSection>
+                )}
+
+              {selectedRole.methodologies &&
+                selectedRole.methodologies.length > 0 && (
+                  <DetailSection title="Methodologies">
+                    <TagList
+                      items={selectedRole.methodologies}
+                    />
+                  </DetailSection>
+                )}
+
+              {selectedRole.relatedRoles &&
+                selectedRole.relatedRoles.length > 0 && (
+                  <DetailSection title="Related Roles">
+                    <TagList
+                      items={selectedRole.relatedRoles}
+                    />
+                  </DetailSection>
+                )}
+
+              {selectedRole.sourcingSignals &&
+                selectedRole.sourcingSignals.length > 0 && (
+                  <DetailSection title="Sourcing Signals">
+                    <TagList
+                      items={selectedRole.sourcingSignals}
                     />
                   </DetailSection>
                 )}
@@ -234,9 +324,11 @@ export default function RoleFamilyExplorer({ roles }: Props) {
                   </div>
 
                   <ul className="space-y-2 text-sm leading-6 text-slate-700">
-                    {selectedRole.recruiterNotes.map((note) => (
-                      <li key={note}>• {note}</li>
-                    ))}
+                    {selectedRole.recruiterNotes.map(
+                      (note) => (
+                        <li key={note}>• {note}</li>
+                      ),
+                    )}
                   </ul>
                 </div>
               )}

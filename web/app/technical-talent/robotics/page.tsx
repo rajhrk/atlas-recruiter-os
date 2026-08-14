@@ -1,5 +1,5 @@
 import AtlasHeader from "@/components/atlas/AtlasHeader";
-import RoboticsRoleExplorer from "@/components/technicalTalent/RoboticsRoleExplorer";
+import SharedRoleExplorer from "@/components/technicalTalent/SharedRoleExplorer";
 import RoboticsTechnicalTalentOverview from "@/components/technicalTalent/RoboticsTechnicalTalentOverview";
 import { roboticsDomain } from "@/data/technicalTalent/robotics";
 
@@ -26,7 +26,7 @@ export default function RoboticsTechnicalTalentPage() {
           </p>
         </div>
 
-        <RoboticsRoleExplorer roles={roboticsDomain.roles} />
+       <SharedRoleExplorer roles={roboticsDomain.roles} />
       </section>
 
       {/* Supporting intelligence */}

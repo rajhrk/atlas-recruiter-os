@@ -1,5 +1,5 @@
 import AtlasHeader from "@/components/atlas/AtlasHeader";
-import SemiconductorRoleExplorer from "@/components/technicalTalent/SemiconductorRoleExplorer";
+import SharedRoleExplorer from "@/components/technicalTalent/SharedRoleExplorer";
 import SemiconductorTechnicalTalentOverview from "@/components/technicalTalent/SemiconductorTechnicalTalentOverview";
 import { semiconductorDomain } from "@/data/technicalTalent/semiconductor";
 
@@ -26,9 +26,7 @@ export default function SemiconductorTechnicalTalentPage() {
           </p>
         </div>
 
-        <SemiconductorRoleExplorer
-          roles={semiconductorDomain.roles}
-        />
+      <SharedRoleExplorer roles={semiconductorDomain.roles} />
       </section>
 
       {/* Supporting intelligence */}

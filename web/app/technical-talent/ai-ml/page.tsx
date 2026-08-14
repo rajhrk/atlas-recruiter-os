@@ -1,5 +1,5 @@
 import AtlasHeader from "@/components/atlas/AtlasHeader";
-import RoleFamilyExplorer from "@/components/technicalTalent/RoleFamilyExplorer";
+import SharedRoleExplorer from "@/components/technicalTalent/SharedRoleExplorer";
 import TechnicalTalentOverview from "@/components/technicalTalent/TechnicalTalentOverview";
 import { aiMlDomain } from "@/data/technicalTalent/aiMl";
 
@@ -26,7 +26,7 @@ export default function AIMLTechnicalTalentPage() {
           </p>
         </div>
 
-        <RoleFamilyExplorer roles={aiMlDomain.roles} />
+   <SharedRoleExplorer roles={aiMlDomain.roles} />
       </section>
 
       {/* Supporting intelligence */}

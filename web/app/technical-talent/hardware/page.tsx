@@ -1,5 +1,5 @@
 import AtlasHeader from "@/components/atlas/AtlasHeader";
-import HardwareRoleExplorer from "@/components/technicalTalent/HardwareRoleExplorer";
+import SharedRoleExplorer from "@/components/technicalTalent/SharedRoleExplorer";
 import HardwareTechnicalTalentOverview from "@/components/technicalTalent/HardwareTechnicalTalentOverview";
 import { hardwareDomain } from "@/data/technicalTalent/hardware";
 
@@ -26,9 +26,7 @@ export default function HardwareTechnicalTalentPage() {
           </p>
         </div>
 
-        <HardwareRoleExplorer
-          roles={hardwareDomain.roles}
-        />
+        <SharedRoleExplorer roles={hardwareDomain.roles} />
       </section>
 
       {/* Supporting intelligence */}
