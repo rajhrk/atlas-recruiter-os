@@ -1,5 +1,6 @@
 import AtlasHeader from "@/components/atlas/AtlasHeader";
 import SemiconductorRoleExplorer from "@/components/technicalTalent/SemiconductorRoleExplorer";
+import SemiconductorTechnicalTalentOverview from "@/components/technicalTalent/SemiconductorTechnicalTalentOverview";
 import { semiconductorDomain } from "@/data/technicalTalent/semiconductor";
 
 export default function SemiconductorTechnicalTalentPage() {
@@ -8,6 +9,10 @@ export default function SemiconductorTechnicalTalentPage() {
       <AtlasHeader
         title="Semiconductor Technical Talent Intelligence"
         description="Technical talent intelligence for sourcing ASIC, RTL, verification, physical design, DFT, STA, FPGA, SoC architecture, analog/mixed-signal, and silicon validation professionals."
+      />
+
+      <SemiconductorTechnicalTalentOverview
+        domain={semiconductorDomain}
       />
 
       <section className="space-y-4">
