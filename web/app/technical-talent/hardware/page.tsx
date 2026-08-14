@@ -11,10 +11,7 @@ export default function HardwareTechnicalTalentPage() {
         description="Technical talent intelligence for sourcing embedded engineers, firmware engineers, embedded Linux specialists, BSP and device-driver engineers, hardware engineers, platform engineers, and hardware validation talent."
       />
 
-      <HardwareTechnicalTalentOverview
-        domain={hardwareDomain}
-      />
-
+      {/* Primary recruiter workspace */}
       <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">
@@ -29,8 +26,15 @@ export default function HardwareTechnicalTalentPage() {
           </p>
         </div>
 
-        <HardwareRoleExplorer roles={hardwareDomain.roles} />
+        <HardwareRoleExplorer
+          roles={hardwareDomain.roles}
+        />
       </section>
+
+      {/* Supporting intelligence */}
+      <HardwareTechnicalTalentOverview
+        domain={hardwareDomain}
+      />
     </div>
   );
 }
