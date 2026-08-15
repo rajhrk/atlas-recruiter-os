@@ -1,8 +1,6 @@
 // ============================================================
 // Atlas Recruiter OS
 // Technical Talent Source Initialization
-//
-// Registers the currently available source adapters.
 // ============================================================
 
 import {
@@ -13,9 +11,12 @@ import {
   mockTechnicalTalentSource,
 } from "@/lib/technicalTalent/sources/MockTechnicalTalentSource";
 
+import {
+  githubTechnicalTalentSource,
+} from "@/lib/technicalTalent/sources/github/GitHubTechnicalTalentSource";
+
 /**
- * Prevent duplicate registration when initialization
- * is called more than once during development.
+ * Prevent duplicate registration during development.
  */
 let initialized = false;
 
@@ -28,11 +29,15 @@ export function initializeTechnicalTalentSources(): void {
     mockTechnicalTalentSource,
   );
 
+  technicalTalentSourceRegistry.register(
+    githubTechnicalTalentSource,
+  );
+
   initialized = true;
 }
 
 /**
- * Initialize sources immediately when this module
+ * Initialize registered sources when this module
  * is imported.
  */
 initializeTechnicalTalentSources();
