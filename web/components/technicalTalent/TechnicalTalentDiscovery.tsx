@@ -1,13 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   discoverTechnicalTalent,
 } from "@/lib/technicalTalent/technicalTalentDiscoveryEngine";
 
+import {
+  initializeTechnicalTalentSources,
+} from "@/lib/technicalTalent/initializeTechnicalTalentSources";
+
+import {
+  orchestrateTechnicalTalentDiscovery,
+} from "@/lib/technicalTalent/technicalTalentDiscoveryOrchestrator";
+
 import type {
   DiscoveryConfidence,
+  DiscoverySource,
   DiscoveryTechnicalDomain,
   TechnicalTalentDiscoveryRecord,
 } from "@/types/technicalTalentDiscovery";
@@ -24,6 +37,29 @@ const CONFIDENCE_OPTIONS: DiscoveryConfidence[] = [
   "Medium",
   "High",
   "Very High",
+];
+
+type DiscoverySourceMode =
+  | "Atlas"
+  | "GitHub"
+  | "All";
+
+const SOURCE_OPTIONS: {
+  label: string;
+  value: DiscoverySourceMode;
+}[] = [
+  {
+    label: "Atlas Intelligence",
+    value: "Atlas",
+  },
+  {
+    label: "GitHub",
+    value: "GitHub",
+  },
+  {
+    label: "All Sources",
+    value: "All",
+  },
 ];
 
 type ResultCardProps = {
@@ -67,6 +103,7 @@ function ResultCard({
             <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
               Role Family
             </p>
+
             <p className="mt-1 text-sm text-slate-800">
               {record.roleFamily}
             </p>
@@ -78,6 +115,7 @@ function ResultCard({
             <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
               Seniority
             </p>
+
             <p className="mt-1 text-sm text-slate-800">
               {record.seniority}
             </p>
@@ -89,6 +127,7 @@ function ResultCard({
             <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
               Confidence
             </p>
+
             <p className="mt-1 text-sm text-slate-800">
               {record.confidence}
             </p>
@@ -103,14 +142,16 @@ function ResultCard({
           </p>
 
           <div className="mt-2 flex flex-wrap gap-2">
-            {record.skills.slice(0, 8).map((skill) => (
-              <span
-                key={`${record.id}-skill-${skill.name}`}
-                className="rounded-md bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
-              >
-                {skill.name}
-              </span>
-            ))}
+            {record.skills
+              .slice(0, 8)
+              .map((skill) => (
+                <span
+                  key={`${record.id}-skill-${skill.name}`}
+                  className="rounded-md bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
+                >
+                  {skill.name}
+                </span>
+              ))}
           </div>
         </div>
       )}
@@ -122,14 +163,16 @@ function ResultCard({
           </p>
 
           <div className="mt-2 flex flex-wrap gap-2">
-            {record.technologies.slice(0, 8).map((technology) => (
-              <span
-                key={`${record.id}-technology-${technology.name}`}
-                className="rounded-md bg-indigo-50 px-2.5 py-1 text-xs text-indigo-700"
-              >
-                {technology.name}
-              </span>
-            ))}
+            {record.technologies
+              .slice(0, 8)
+              .map((technology) => (
+                <span
+                  key={`${record.id}-technology-${technology.name}`}
+                  className="rounded-md bg-indigo-50 px-2.5 py-1 text-xs text-indigo-700"
+                >
+                  {technology.name}
+                </span>
+              ))}
           </div>
         </div>
       )}
@@ -200,13 +243,89 @@ function ResultCard({
   );
 }
 
+type SourceStatusProps = {
+  sourceResult: {
+    sourcesRequested: DiscoverySource[];
+    sourcesSuccessful: DiscoverySource[];
+    sourcesFailed: DiscoverySource[];
+  };
+};
+
+function SourceStatus({
+  sourceResult,
+}: SourceStatusProps) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+            Source execution
+          </p>
+
+          <p className="mt-1 text-sm text-slate-600">
+            Evidence sources queried for this discovery run.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {sourceResult.sourcesRequested.map(
+            (requestedSource) => {
+              const successful =
+                sourceResult.sourcesSuccessful.includes(
+                  requestedSource,
+                );
+
+              const failed =
+                sourceResult.sourcesFailed.includes(
+                  requestedSource,
+                );
+
+              return (
+                <span
+                  key={requestedSource}
+                  className={[
+                    "rounded-full px-3 py-1 text-xs font-medium",
+                    successful
+                      ? "bg-emerald-50 text-emerald-700"
+                      : failed
+                        ? "bg-red-50 text-red-700"
+                        : "bg-slate-100 text-slate-600",
+                  ].join(" ")}
+                >
+                  {requestedSource}
+                  {successful
+                    ? " · OK"
+                    : failed
+                      ? " · Failed"
+                      : ""}
+                </span>
+              );
+            },
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TechnicalTalentDiscovery() {
-  const [keywords, setKeywords] = useState("");
+  const [keywords, setKeywords] =
+    useState("");
+
+  const [source, setSource] =
+    useState<DiscoverySourceMode>(
+      "Atlas",
+    );
+
   const [selectedDomains, setSelectedDomains] =
-    useState<DiscoveryTechnicalDomain[]>([]);
+    useState<DiscoveryTechnicalDomain[]>(
+      [],
+    );
 
   const [confidence, setConfidence] =
-    useState<DiscoveryConfidence | "">("");
+    useState<
+      DiscoveryConfidence | ""
+    >("");
 
   const [researchFocused, setResearchFocused] =
     useState(false);
@@ -223,15 +342,45 @@ export default function TechnicalTalentDiscovery() {
   const [hasSearched, setHasSearched] =
     useState(false);
 
-  const result = useMemo(() => {
-    if (!hasSearched) {
+  const [sourceRecords, setSourceRecords] =
+    useState<
+      TechnicalTalentDiscoveryRecord[]
+    >([]);
+
+  const [sourceLoading, setSourceLoading] =
+    useState(false);
+
+  const [sourceError, setSourceError] =
+    useState<string | null>(null);
+
+  const [sourceResult, setSourceResult] =
+    useState<{
+      sourcesRequested: DiscoverySource[];
+      sourcesSuccessful: DiscoverySource[];
+      sourcesFailed: DiscoverySource[];
+    } | null>(null);
+
+  /**
+   * Existing deterministic Atlas discovery.
+   *
+   * This remains untouched when Atlas Intelligence
+   * is selected.
+   */
+  const atlasResult = useMemo(() => {
+    if (
+      !hasSearched ||
+      source !== "Atlas"
+    ) {
       return null;
     }
 
-    const parsedKeywords = keywords
-      .split(",")
-      .map((keyword) => keyword.trim())
-      .filter(Boolean);
+    const parsedKeywords =
+      keywords
+        .split(",")
+        .map((keyword) =>
+          keyword.trim(),
+        )
+        .filter(Boolean);
 
     return discoverTechnicalTalent({
       keywords:
@@ -266,24 +415,146 @@ export default function TechnicalTalentDiscovery() {
     patentFocused,
     crossDomainOnly,
     hasSearched,
+    source,
+  ]);
+
+  /**
+   * External source discovery.
+   *
+   * The orchestrator is asynchronous, so it runs in an
+   * effect rather than inside useMemo.
+   */
+  useEffect(() => {
+    if (
+      !hasSearched ||
+      source === "Atlas"
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function runExternalDiscovery() {
+      setSourceLoading(true);
+      setSourceError(null);
+      setSourceRecords([]);
+      setSourceResult(null);
+
+      try {
+        initializeTechnicalTalentSources();
+
+        const parsedKeywords =
+          keywords
+            .split(",")
+            .map((keyword) =>
+              keyword.trim(),
+            )
+            .filter(Boolean);
+
+        const query = {
+          keywords:
+            parsedKeywords.length > 0
+              ? parsedKeywords
+              : undefined,
+
+          domains:
+            selectedDomains.length > 0
+              ? selectedDomains
+              : undefined,
+
+          minimumConfidence:
+            confidence || undefined,
+        };
+
+        const options =
+          source === "GitHub"
+            ? {
+                sources: [
+                  "GitHub" as DiscoverySource,
+                ],
+                limit: 50,
+              }
+            : {
+                limit: 50,
+              };
+
+        const response =
+          await orchestrateTechnicalTalentDiscovery(
+            query,
+            options,
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        setSourceRecords(
+          response.records,
+        );
+
+        setSourceResult({
+          sourcesRequested:
+            response.sourcesRequested,
+
+          sourcesSuccessful:
+            response.sourcesSuccessful,
+
+          sourcesFailed:
+            response.sourcesFailed,
+        });
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setSourceError(
+          error instanceof Error
+            ? error.message
+            : "Technical talent discovery failed.",
+        );
+      } finally {
+        if (!cancelled) {
+          setSourceLoading(false);
+        }
+      }
+    }
+
+    void runExternalDiscovery();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    source,
+    keywords,
+    selectedDomains,
+    confidence,
+    hasSearched,
   ]);
 
   function toggleDomain(
     domain: DiscoveryTechnicalDomain,
   ) {
     setSelectedDomains((current) => {
-      if (current.includes(domain)) {
+      if (
+        current.includes(domain)
+      ) {
         return current.filter(
-          (item) => item !== domain,
+          (item) =>
+            item !== domain,
         );
       }
 
-      return [...current, domain];
+      return [
+        ...current,
+        domain,
+      ];
     });
   }
 
   function clearSearch() {
     setKeywords("");
+    setSource("Atlas");
     setSelectedDomains([]);
     setConfidence("");
     setResearchFocused(false);
@@ -291,6 +562,11 @@ export default function TechnicalTalentDiscovery() {
     setPatentFocused(false);
     setCrossDomainOnly(false);
     setHasSearched(false);
+
+    setSourceRecords([]);
+    setSourceError(null);
+    setSourceResult(null);
+    setSourceLoading(false);
   }
 
   return (
@@ -325,7 +601,9 @@ export default function TechnicalTalentDiscovery() {
             type="text"
             value={keywords}
             onChange={(event) =>
-              setKeywords(event.target.value)
+              setKeywords(
+                event.target.value,
+              )
             }
             placeholder="e.g. C++, robotics, perception"
             className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -338,32 +616,80 @@ export default function TechnicalTalentDiscovery() {
 
         <div className="mt-6">
           <p className="text-sm font-medium text-slate-800">
+            Discovery source
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {SOURCE_OPTIONS.map(
+              (option) => {
+                const active =
+                  source ===
+                  option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setSource(
+                        option.value,
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-4 py-2 text-sm transition",
+                      active
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:border-slate-400",
+                    ].join(" ")}
+                  >
+                    {option.label}
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+          <p className="mt-2 text-xs text-slate-500">
+            Atlas uses normalized internal intelligence.
+            GitHub searches public repository evidence.
+            All Sources queries every registered source.
+          </p>
+        </div>
+
+        <div className="mt-6">
+          <p className="text-sm font-medium text-slate-800">
             Technical domains
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            {DOMAINS.map((domain) => {
-              const active =
-                selectedDomains.includes(domain);
+            {DOMAINS.map(
+              (domain) => {
+                const active =
+                  selectedDomains.includes(
+                    domain,
+                  );
 
-              return (
-                <button
-                  key={domain}
-                  type="button"
-                  onClick={() =>
-                    toggleDomain(domain)
-                  }
-                  className={[
-                    "rounded-full border px-4 py-2 text-sm transition",
-                    active
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-slate-300 bg-white text-slate-700 hover:border-slate-400",
-                  ].join(" ")}
-                >
-                  {domain}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={domain}
+                    type="button"
+                    onClick={() =>
+                      toggleDomain(
+                        domain,
+                      )
+                    }
+                    className={[
+                      "rounded-full border px-4 py-2 text-sm transition",
+                      active
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:border-slate-400",
+                    ].join(" ")}
+                  >
+                    {domain}
+                  </button>
+                );
+              },
+            )}
           </div>
         </div>
 
@@ -476,7 +802,9 @@ export default function TechnicalTalentDiscovery() {
         <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => setHasSearched(true)}
+            onClick={() =>
+              setHasSearched(true)
+            }
             className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Search technical talent
@@ -492,12 +820,49 @@ export default function TechnicalTalentDiscovery() {
         </div>
       </div>
 
-      {result && (
+      {sourceLoading && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="font-medium text-slate-900">
+            Searching{" "}
+            {source === "GitHub"
+              ? "GitHub"
+              : "technical talent sources"}
+            ...
+          </p>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Collecting and normalizing technical evidence.
+          </p>
+        </div>
+      )}
+
+      {sourceError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+          <p className="font-medium text-red-900">
+            Discovery failed
+          </p>
+
+          <p className="mt-1 text-sm text-red-700">
+            {sourceError}
+          </p>
+        </div>
+      )}
+
+      {sourceResult &&
+        !sourceLoading && (
+          <SourceStatus
+            sourceResult={
+              sourceResult
+            }
+          />
+        )}
+
+      {atlasResult && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-slate-950">
-                {result.total} matching technical roles
+                {atlasResult.total} matching technical roles
               </p>
 
               <p className="mt-1 text-xs text-slate-500">
@@ -506,11 +871,13 @@ export default function TechnicalTalentDiscovery() {
             </div>
 
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
-              Showing {result.candidates.length}
+              Showing{" "}
+              {atlasResult.candidates.length}
             </span>
           </div>
 
-          {result.candidates.length === 0 ? (
+          {atlasResult.candidates.length ===
+          0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
               <p className="font-medium text-slate-900">
                 No matching technical roles found.
@@ -523,7 +890,7 @@ export default function TechnicalTalentDiscovery() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {result.candidates.map(
+              {atlasResult.candidates.map(
                 (record) => (
                   <ResultCard
                     key={record.id}
@@ -535,6 +902,54 @@ export default function TechnicalTalentDiscovery() {
           )}
         </div>
       )}
+
+      {source !== "Atlas" &&
+        hasSearched &&
+        !sourceLoading &&
+        !sourceError && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-950">
+                  {sourceRecords.length} matching technical records
+                </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Source-backed discovery results
+                </p>
+              </div>
+
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+                Showing{" "}
+                {sourceRecords.length}
+              </span>
+            </div>
+
+            {sourceRecords.length ===
+            0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+                <p className="font-medium text-slate-900">
+                  No source records found.
+                </p>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Try broader keywords.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {sourceRecords.map(
+                  (record) => (
+                    <ResultCard
+                      key={record.id}
+                      record={record}
+                    />
+                  ),
+                )}
+              </div>
+            )}
+          </div>
+        )}
     </section>
   );
 }
