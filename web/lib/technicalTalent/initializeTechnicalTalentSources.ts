@@ -19,6 +19,10 @@ import {
   semanticScholarTechnicalTalentSource,
 } from "@/lib/technicalTalent/sources/research/SemanticScholarTechnicalTalentSource";
 
+import {
+  openReviewTechnicalTalentSource,
+} from "@/lib/technicalTalent/sources/research/OpenReviewTechnicalTalentSource";
+
 /**
  * Prevent duplicate registration during development.
  */
@@ -39,6 +43,10 @@ export function initializeTechnicalTalentSources(): void {
 
   technicalTalentSourceRegistry.register(
     semanticScholarTechnicalTalentSource,
+  );
+
+  technicalTalentSourceRegistry.register(
+    openReviewTechnicalTalentSource,
   );
 
   initialized = true;

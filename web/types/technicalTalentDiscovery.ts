@@ -58,6 +58,7 @@ export type DiscoveryTalentType =
 export type DiscoverySource =
   | "LinkedIn"
   | "GitHub"
+  | "OpenReview"
   | "Google Scholar"
   | "Google Patents"
   | "ORCID"
