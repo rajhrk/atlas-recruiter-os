@@ -15,6 +15,10 @@ import {
   githubTechnicalTalentSource,
 } from "@/lib/technicalTalent/sources/github/GitHubTechnicalTalentSource";
 
+import {
+  semanticScholarTechnicalTalentSource,
+} from "@/lib/technicalTalent/sources/research/SemanticScholarTechnicalTalentSource";
+
 /**
  * Prevent duplicate registration during development.
  */
@@ -31,6 +35,10 @@ export function initializeTechnicalTalentSources(): void {
 
   technicalTalentSourceRegistry.register(
     githubTechnicalTalentSource,
+  );
+
+  technicalTalentSourceRegistry.register(
+    semanticScholarTechnicalTalentSource,
   );
 
   initialized = true;
