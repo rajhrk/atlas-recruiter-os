@@ -543,7 +543,11 @@ export interface TechnicalTalentDiscoveryRecord {
   confidence?: DiscoveryConfidence;
 
   /**
-   * Atlas candidate verification assessment.
+   * Candidate verification assessment generated
+   * from existing evidence.
+   *
+   * This is distinct from source confidence and
+   * candidate fit scoring.
    */
   verification?: DiscoveryVerification;
 

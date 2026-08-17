@@ -27,7 +27,9 @@ import {
 import {
   resolveTechnicalTalentIdentity,
 } from "@/lib/technicalTalent/technicalTalentIdentityResolver";
-
+import {
+  verifyTechnicalTalentCandidate,
+} from "@/lib/technicalTalent/technicalTalentCandidateVerifier";
 import type {
   DiscoverySource,
   TechnicalTalentDiscoveryQuery,
@@ -754,12 +756,24 @@ export async function orchestrateTechnicalTalentDiscovery(
     );
 
   const mergedRecords =
-    identityResolution.records;
+  identityResolution.records;
 
-  const evidence =
-    mergeSourceEvidence(
-      executions,
-    );
+const verifiedRecords =
+  mergedRecords.map(
+    (record) => ({
+      ...record,
+
+      verification:
+        verifyTechnicalTalentCandidate(
+          record,
+        ),
+    }),
+  );
+
+const evidence =
+  mergeSourceEvidence(
+    executions,
+  );
 
   const offset = Math.max(
     options.offset ?? 0,
@@ -771,11 +785,11 @@ export async function orchestrateTechnicalTalentDiscovery(
     1,
   );
 
-  const records =
-    mergedRecords.slice(
-      offset,
-      offset + limit,
-    );
+ const records =
+  verifiedRecords.slice(
+    offset,
+    offset + limit,
+  );
 
   const sourcesSuccessful =
     executions
@@ -810,8 +824,8 @@ export async function orchestrateTechnicalTalentDiscovery(
 
     evidence,
 
-    total:
-      mergedRecords.length,
+  total:
+  verifiedRecords.length,
 
     unresolvedDuplicates:
       identityResolution.unresolvedDuplicates,
