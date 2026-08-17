@@ -24,6 +24,10 @@ import {
   technicalTalentSourceRegistry,
 } from "@/lib/technicalTalent/technicalTalentSourceRegistry";
 
+import {
+  resolveTechnicalTalentIdentity,
+} from "@/lib/technicalTalent/technicalTalentIdentityResolver";
+
 import type {
   DiscoverySource,
   TechnicalTalentDiscoveryQuery,
@@ -61,6 +65,12 @@ export interface TechnicalTalentOrchestrationResult {
   evidence: TechnicalTalentSourceEvidence[];
 
   total: number;
+
+  /**
+   * Number of probable cross-source identity matches
+   * that require recruiter/manual review.
+   */
+  unresolvedDuplicates: number;
 
   sourcesRequested: DiscoverySource[];
 
@@ -178,6 +188,13 @@ function mergeRecords(
     primaryDomain:
       existing.primaryDomain ||
       incoming.primaryDomain,
+
+    sourceRecordIds: Array.from(
+      new Set([
+        ...(existing.sourceRecordIds ?? []),
+        ...(incoming.sourceRecordIds ?? []),
+      ]),
+    ),
 
     location:
       existing.location ||
@@ -563,6 +580,97 @@ function mergeSourceRecords(
 }
 
 /**
+ * Resolve probable cross-source identities after exact
+ * source-record deduplication.
+ *
+ * This deliberately runs after mergeSourceRecords() so
+ * records with an identical stable identity are handled
+ * by the existing deterministic merge first.
+ *
+ * Identity resolution is conservative:
+ *
+ * - shouldMerge=true  -> merge records
+ * - requiresReview=true -> keep separate and count
+ * - otherwise -> keep separate
+ */
+function resolveCrossSourceIdentities(
+  records: TechnicalTalentDiscoveryRecord[],
+): {
+  records: TechnicalTalentDiscoveryRecord[];
+  unresolvedDuplicates: number;
+} {
+  const resolved:
+    TechnicalTalentDiscoveryRecord[] =
+    [];
+
+  let unresolvedDuplicates =
+    0;
+
+  for (const record of records) {
+    let mergedRecord =
+      record;
+
+    let matchedExisting =
+      false;
+
+    for (
+      let index = 0;
+      index < resolved.length;
+      index += 1
+    ) {
+      const existing =
+        resolved[index];
+
+      const identityMatch =
+        resolveTechnicalTalentIdentity(
+          existing,
+          mergedRecord,
+        );
+
+      if (
+        identityMatch.shouldMerge
+      ) {
+        mergedRecord =
+          mergeRecords(
+            existing,
+            mergedRecord,
+          );
+
+        resolved[index] =
+          mergedRecord;
+
+        matchedExisting =
+          true;
+
+        break;
+      }
+
+      if (
+        identityMatch.requiresReview
+      ) {
+        unresolvedDuplicates +=
+          1;
+      }
+    }
+
+    if (
+      !matchedExisting
+    ) {
+      resolved.push(
+        mergedRecord,
+      );
+    }
+  }
+
+  return {
+    records:
+      resolved,
+
+    unresolvedDuplicates,
+  };
+}
+
+/**
  * Merge evidence from every successful source.
  */
 function mergeSourceEvidence(
@@ -635,10 +743,18 @@ export async function orchestrateTechnicalTalentDiscovery(
       ),
     );
 
-  const mergedRecords =
+  const exactDeduplicatedRecords =
     mergeSourceRecords(
       executions,
     );
+
+  const identityResolution =
+    resolveCrossSourceIdentities(
+      exactDeduplicatedRecords,
+    );
+
+  const mergedRecords =
+    identityResolution.records;
 
   const evidence =
     mergeSourceEvidence(
@@ -696,6 +812,9 @@ export async function orchestrateTechnicalTalentDiscovery(
 
     total:
       mergedRecords.length,
+
+    unresolvedDuplicates:
+      identityResolution.unresolvedDuplicates,
 
     sourcesRequested,
 
