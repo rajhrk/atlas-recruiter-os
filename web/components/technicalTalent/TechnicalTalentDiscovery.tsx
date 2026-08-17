@@ -199,6 +199,131 @@ function ResultCard({
           </div>
         )}
 
+      {(record.fitScore || record.verification) && (
+        <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/40 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
+                Atlas Match Intelligence
+              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                {record.fitScore && (
+                  <div>
+                    <span className="text-2xl font-bold text-slate-950">
+                      {record.fitScore.overall}
+                    </span>
+                    <span className="ml-1 text-xs text-slate-500">
+                      / 100 fit
+                    </span>
+                  </div>
+                )}
+
+                {record.verification && (
+                  <span
+                    className={[
+                      "rounded-full px-3 py-1 text-xs font-semibold",
+                      record.verification.status === "Verified"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : record.verification.status === "Partially Verified"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-slate-100 text-slate-600",
+                    ].join(" ")}
+                  >
+                    {record.verification.status}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {record.verification && (
+              <div className="text-right">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  Verification
+                </p>
+
+                <p className="mt-1 text-lg font-semibold text-slate-900">
+                  {record.verification.score}
+                  <span className="ml-1 text-xs font-normal text-slate-500">
+                    / 100
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {record.fitScore && (
+            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+              {[
+                ["Technical", record.fitScore.technical],
+                ["Research", record.fitScore.research],
+                ["Domain", record.fitScore.domain],
+                ["Evidence", record.fitScore.evidence],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-xl border border-white bg-white px-3 py-2"
+                >
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    {label}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {value ?? 0}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {record.fitScore &&
+            record.fitScore.reasons.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  Why this candidate matched
+                </p>
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {record.fitScore.reasons
+                    .filter(
+                      (reason) =>
+                        reason.category !== "Other" ||
+                        reason.signal !== "Domain mismatch",
+                    )
+                    .slice(0, 8)
+                    .map((reason, index) => (
+                      <span
+                        key={`${record.id}-match-${index}`}
+                        className="rounded-md bg-white px-2.5 py-1 text-xs text-slate-700"
+                        title={reason.explanation}
+                      >
+                        {reason.signal}
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
+
+          {record.verification &&
+            record.verification.independentSourceCount > 0 && (
+              <p className="mt-3 text-xs text-slate-500">
+                Verified from{" "}
+                <span className="font-medium text-slate-700">
+                  {record.verification.independentSourceCount}
+                </span>{" "}
+                independent source
+                {record.verification.independentSourceCount === 1
+                  ? ""
+                  : "s"}
+                {" · "}
+                {record.verification.evidenceCount} evidence item
+                {record.verification.evidenceCount === 1
+                  ? ""
+                  : "s"}
+              </p>
+            )}
+        </div>
+      )}
+
       {record.sourcingSignals &&
         record.sourcingSignals.length > 0 && (
           <div className="mt-5 rounded-xl bg-slate-50 p-4">
