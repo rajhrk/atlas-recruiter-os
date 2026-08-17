@@ -14,6 +14,10 @@ import {
   technicalTalentDiscoveryIndex,
 } from "@/lib/technicalTalent/technicalTalentDiscoveryIndex";
 
+import {
+  scoreTechnicalTalentCandidate,
+} from "@/lib/technicalTalent/technicalTalentFitScorer";
+
 import type {
   DiscoveryConfidence,
   DiscoveryTechnicalDomain,
@@ -462,13 +466,84 @@ function matchesQuery(
 export function discoverTechnicalTalent(
   query: TechnicalTalentDiscoveryQuery = {},
 ): TechnicalTalentDiscoveryResult {
-  let candidates =
-    technicalTalentDiscoveryIndex.filter(
-      (record) =>
-        matchesQuery(record, query),
+  /**
+   * Score every indexed record before filtering.
+   *
+   * This is important because matchesQuery() supports
+   * minimumFitScore and therefore must see the newly
+   * calculated fitScore.
+   */
+  const scoredIndex =
+    technicalTalentDiscoveryIndex.map(
+      (record) => ({
+        ...record,
+
+        fitScore:
+          scoreTechnicalTalentCandidate(
+            record,
+            query,
+          ),
+      }),
     );
 
-  const total = candidates.length;
+  /**
+   * Preserve the existing deterministic filtering
+   * behavior, but now filters operate against the
+   * newly calculated fit score.
+   */
+  let candidates =
+    scoredIndex.filter(
+      (record) =>
+        matchesQuery(
+          record,
+          query,
+        ),
+    );
+
+  const total =
+    candidates.length;
+
+  /**
+   * Rank strongest candidates first.
+   *
+   * Tie-breakers:
+   * 1. Overall fit
+   * 2. Technical fit
+   * 3. Evidence strength
+   *
+   * Array sort in modern JavaScript is stable, so
+   * candidates with identical values retain their
+   * original discovery-index ordering.
+   */
+  candidates =
+    candidates.sort(
+      (a, b) => {
+        const overallDifference =
+          (b.fitScore?.overall ?? 0) -
+          (a.fitScore?.overall ?? 0);
+
+        if (
+          overallDifference !== 0
+        ) {
+          return overallDifference;
+        }
+
+        const technicalDifference =
+          (b.fitScore?.technical ?? 0) -
+          (a.fitScore?.technical ?? 0);
+
+        if (
+          technicalDifference !== 0
+        ) {
+          return technicalDifference;
+        }
+
+        return (
+          (b.fitScore?.evidence ?? 0) -
+          (a.fitScore?.evidence ?? 0)
+        );
+      },
+    );
 
   const offset = Math.max(
     query.offset ?? 0,
@@ -480,10 +555,11 @@ export function discoverTechnicalTalent(
     1,
   );
 
-  candidates = candidates.slice(
-    offset,
-    offset + limit,
-  );
+  candidates =
+    candidates.slice(
+      offset,
+      offset + limit,
+    );
 
   return {
     query,
