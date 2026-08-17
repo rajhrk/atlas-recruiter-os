@@ -373,7 +373,72 @@ export interface DiscoveryFitScore {
 
   reasons: DiscoveryMatchReason[];
 }
+/**
+ * Atlas candidate verification assessment.
+ *
+ * Verification is distinct from source-level confidence and
+ * candidate fit scoring. It evaluates how strongly Atlas can
+ * corroborate a candidate across independent evidence sources.
+ */
+export type DiscoveryVerificationStatus =
+  | "Verified"
+  | "Partially Verified"
+  | "Unverified";
 
+export interface DiscoveryVerification {
+  /**
+   * Overall Atlas verification status.
+   */
+  status: DiscoveryVerificationStatus;
+
+  /**
+   * Numeric verification score from 0 to 100.
+   */
+  score: number;
+
+  /**
+   * Verification confidence by evidence category.
+   */
+  identity: DiscoveryConfidence;
+
+  employment?: DiscoveryConfidence;
+
+  technical?: DiscoveryConfidence;
+
+  research?: DiscoveryConfidence;
+
+  /**
+   * Number of distinct external sources contributing
+   * meaningful verification evidence.
+   */
+  independentSourceCount: number;
+
+  /**
+   * Total evidence items considered.
+   */
+  evidenceCount: number;
+
+  /**
+   * Evidence IDs that materially contributed to the
+   * verification assessment.
+   */
+  verifiedEvidenceIds: string[];
+
+  /**
+   * Verification gaps or warnings for recruiters.
+   */
+  warnings: string[];
+
+  /**
+   * Human-readable explanation of the verification result.
+   */
+  explanation: string;
+
+  /**
+   * Timestamp of the Atlas verification assessment.
+   */
+  verifiedAt: string;
+}
 /**
  * Recruiter approval state.
  *
@@ -476,6 +541,11 @@ export interface TechnicalTalentDiscoveryRecord {
    * Confidence in the overall normalized record.
    */
   confidence?: DiscoveryConfidence;
+
+  /**
+   * Atlas candidate verification assessment.
+   */
+  verification?: DiscoveryVerification;
 
   /**
    * Recruiter workflow state.
