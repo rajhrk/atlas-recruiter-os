@@ -492,23 +492,38 @@ function clampScore(
   );
 }
 
+function getPersonLevelSourceIdentity(
+  record: TechnicalTalentDiscoveryRecord,
+): string | undefined {
+  /*
+   * Only source identifiers that represent a person/account
+   * may be used as automatic identity evidence.
+   *
+   * OpenReview note IDs and Semantic Scholar paper IDs are
+   * publication-level identifiers and must not identify a
+   * person because co-authors share the same publication ID.
+   */
+  if (
+    record.id.startsWith("github:")
+  ) {
+    return normalizeCompact(
+      record.id,
+    );
+  }
+
+  return undefined;
+}
+
 function buildIdentityKey(
   record: TechnicalTalentDiscoveryRecord,
 ): string {
-  const sourceIds =
-    getSourceRecordIds(
+  const personIdentity =
+    getPersonLevelSourceIdentity(
       record,
     );
 
-  if (
-    sourceIds.length > 0
-  ) {
-    return sourceIds
-      .map(
-        normalizeCompact,
-      )
-      .sort()
-      .join("|");
+  if (personIdentity) {
+    return personIdentity;
   }
 
   const name =
@@ -534,31 +549,21 @@ function scoreSourceIdentity(
   right: TechnicalTalentDiscoveryRecord,
   reasons: DiscoveryMatchReason[],
 ): number {
-  const leftIds =
-    getSourceRecordIds(
+  const leftIdentity =
+    getPersonLevelSourceIdentity(
       left,
     );
 
-  const rightIds =
-    getSourceRecordIds(
+  const rightIdentity =
+    getPersonLevelSourceIdentity(
       right,
     );
 
   if (
-    leftIds.length === 0 ||
-    rightIds.length === 0
-  ) {
-    return 0;
-  }
-
-  const overlap =
-    arraysOverlap(
-      leftIds,
-      rightIds,
-    );
-
-  if (
-    overlap.length === 0
+    !leftIdentity ||
+    !rightIdentity ||
+    leftIdentity !==
+      rightIdentity
   ) {
     return 0;
   }
@@ -576,7 +581,7 @@ function scoreSourceIdentity(
         40,
 
       explanation:
-        "Both records contain the same external source record identifier.",
+        "Both records resolve to the same person-level external source identity.",
 
       evidenceIds:
         [],
@@ -879,6 +884,147 @@ function scoreTechnologies(
 
       explanation:
         `Shared technologies include: ${overlap.slice(0, 5).join(", ")}.`,
+    },
+  );
+
+  return weight;
+}
+
+
+function getCoauthors(
+  record: TechnicalTalentDiscoveryRecord,
+): string[] {
+  const self =
+    normalizeCompact(
+      record.name,
+    );
+
+  return Array.from(
+    new Set(
+      (record.publications ?? [])
+        .flatMap(
+          (publication) =>
+            publication.authors ??
+            [],
+        )
+        .map(
+          normalizeCompact,
+        )
+        .filter(
+          (author) =>
+            author &&
+            author !== self,
+        ),
+    ),
+  );
+}
+
+function hasDifferentPublications(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+): boolean {
+  const leftTitles =
+    new Set(
+      getPublicationTitles(
+        left,
+      ).map(
+        normalizeCompact,
+      ),
+    );
+
+  const rightTitles =
+    new Set(
+      getPublicationTitles(
+        right,
+      ).map(
+        normalizeCompact,
+      ),
+    );
+
+  for (
+    const title of leftTitles
+  ) {
+    if (
+      !rightTitles.has(
+        title,
+      )
+    ) {
+      return true;
+    }
+  }
+
+  for (
+    const title of rightTitles
+  ) {
+    if (
+      !leftTitles.has(
+        title,
+      )
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function scoreSharedCoauthorNetwork(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+  reasons: DiscoveryMatchReason[],
+): number {
+  if (
+    !namesMatch(
+      left,
+      right,
+    )
+  ) {
+    return 0;
+  }
+
+  if (
+    !hasDifferentPublications(
+      left,
+      right,
+    )
+  ) {
+    return 0;
+  }
+
+  const overlap =
+    arraysOverlap(
+      getCoauthors(left),
+      getCoauthors(right),
+    );
+
+  if (
+    overlap.length ===
+    0
+  ) {
+    return 0;
+  }
+
+  const weight =
+    Math.min(
+      20,
+      overlap.length *
+        5,
+    );
+
+  addReason(
+    reasons,
+    {
+      category:
+        "Research",
+
+      signal:
+        "Shared co-author network",
+
+      weight,
+
+      explanation:
+        `Both records share ${overlap.length} recurring co-author(s) across different publications.`,
+
     },
   );
 
@@ -1199,6 +1345,13 @@ export function resolveTechnicalTalentIdentity(
 
   score +=
     scorePublications(
+      left,
+      right,
+      reasons,
+    );
+
+  score +=
+    scoreSharedCoauthorNetwork(
       left,
       right,
       reasons,

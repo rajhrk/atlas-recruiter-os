@@ -348,7 +348,13 @@ function mergeRequiredArrays<T>(
   const result: T[] = [];
 
   for (const item of combined) {
-    const key = stableObjectKey(item);
+    const key =
+      item &&
+      typeof item === "object" &&
+      "id" in item &&
+      typeof (item as { id?: unknown }).id === "string"
+        ? (item as { id: string }).id
+        : stableObjectKey(item);
 
     if (seen.has(key)) {
       continue;

@@ -583,11 +583,31 @@ export class GitHubTechnicalTalentSource
         url,
       );
 
+    /**
+     * GitHub repository search results can represent either
+     * individual developers or organizations.
+     *
+     * Only human-owned repositories become candidate
+     * records. Organization-owned repositories remain
+     * source evidence and discovery context, but must not
+     * appear as people in recruiter results.
+     */
+    const candidateRepositories =
+      response.items.filter(
+        (repository) =>
+          repository.owner.type ===
+          "User",
+      );
+
     const records =
-      response.items.map(
+      candidateRepositories.map(
         repositoryToRecord,
       );
 
+    /**
+     * Preserve evidence for every repository returned by
+     * GitHub, including organization-owned repositories.
+     */
     const evidence =
       response.items.map(
         repositoryToEvidence,

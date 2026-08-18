@@ -26,11 +26,25 @@ import type {
  * - make hiring decisions
  */
 
-const TECHNICAL_WEIGHT = 35;
+const TECHNICAL_WEIGHT = 40;
 const RESEARCH_WEIGHT = 20;
 const DOMAIN_WEIGHT = 15;
-const EVIDENCE_WEIGHT = 15;
-const CONFIDENCE_WEIGHT = 15;
+const EVIDENCE_WEIGHT = 25;
+
+/**
+ * Verification is intentionally NOT part of candidate fit.
+ *
+ * Fit answers:
+ *   "How well does this candidate match the query?"
+ *
+ * Verification answers:
+ *   "How strongly can Atlas corroborate this candidate?"
+ *
+ * Keeping these dimensions separate prevents strong technical or
+ * research candidates from being unfairly penalized simply because
+ * Atlas has not yet enriched them with employment or identity
+ * evidence from additional sources.
+ */
 
 const CONFIDENCE_SCORE: Record<
   DiscoveryConfidence,
@@ -485,7 +499,7 @@ function scoreVerification(
       signal:
         verification.status,
       weight:
-        CONFIDENCE_WEIGHT,
+        0,
       explanation:
         `Candidate verification is "${verification.status}" with a verification score of ${verification.score}.`,
       evidenceIds:
@@ -660,11 +674,10 @@ export function scoreTechnicalTalentCandidate(
       reasons,
     );
 
-  const verificationScore =
-    scoreVerification(
-      record,
-      reasons,
-    );
+  scoreVerification(
+    record,
+    reasons,
+  );
 
   const roleScore =
     scoreRoleFamily(
@@ -690,6 +703,14 @@ export function scoreTechnicalTalentCandidate(
           0.1,
     );
 
+  /**
+   * Candidate fit is based on relevance and evidence strength.
+   *
+   * Verification remains calculated separately and is exposed
+   * through record.verification. It must not suppress a strong
+   * technical/research match merely because employment evidence
+   * has not yet been discovered.
+   */
   let overall =
     Math.round(
       adjustedTechnical *
@@ -699,9 +720,7 @@ export function scoreTechnicalTalentCandidate(
         domainScore *
           (DOMAIN_WEIGHT / 100) +
         evidenceScore *
-          (EVIDENCE_WEIGHT / 100) +
-        verificationScore *
-          (CONFIDENCE_WEIGHT / 100),
+          (EVIDENCE_WEIGHT / 100),
     );
 
   const requestedDomains =
@@ -751,8 +770,13 @@ export function scoreTechnicalTalentCandidate(
     evidence:
       evidenceScore,
 
+    /**
+     * Fit confidence reflects the strength of the evidence
+     * supporting the match, while candidate verification remains
+     * available separately on record.verification.
+     */
     confidence:
-      verificationScore,
+      evidenceScore,
 
     reasons,
   };

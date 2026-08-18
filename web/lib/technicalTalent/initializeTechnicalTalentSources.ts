@@ -8,10 +8,6 @@ import {
 } from "@/lib/technicalTalent/technicalTalentSourceRegistry";
 
 import {
-  mockTechnicalTalentSource,
-} from "@/lib/technicalTalent/sources/MockTechnicalTalentSource";
-
-import {
   githubTechnicalTalentSource,
 } from "@/lib/technicalTalent/sources/github/GitHubTechnicalTalentSource";
 
@@ -32,10 +28,6 @@ export function initializeTechnicalTalentSources(): void {
   if (initialized) {
     return;
   }
-
-  technicalTalentSourceRegistry.register(
-    mockTechnicalTalentSource,
-  );
 
   technicalTalentSourceRegistry.register(
     githubTechnicalTalentSource,
