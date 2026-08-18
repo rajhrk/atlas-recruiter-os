@@ -14,10 +14,6 @@ import {
   initializeTechnicalTalentSources,
 } from "@/lib/technicalTalent/initializeTechnicalTalentSources";
 
-import {
-  orchestrateTechnicalTalentDiscovery,
-} from "@/lib/technicalTalent/technicalTalentDiscoveryOrchestrator";
-
 import type {
   DiscoveryConfidence,
   DiscoverySource,
@@ -591,41 +587,58 @@ export default function TechnicalTalentDiscovery() {
             confidence || undefined,
         };
 
-        const options =
-          source === "GitHub"
-            ? {
-                sources: [
-                  "GitHub" as DiscoverySource,
-                ],
-                limit: 50,
-              }
-            : {
-                limit: 50,
-              };
-
         const response =
-          await orchestrateTechnicalTalentDiscovery(
-            query,
-            options,
+          await fetch(
+            "/api/technical-talent/discovery",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+                ...query,
+                ...(source === "GitHub"
+                  ? {
+                      sources: [
+                        "GitHub" as DiscoverySource,
+                      ],
+                    }
+                  : {}),
+                limit: 50,
+              }),
+            },
           );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data?.error ??
+              "Technical talent discovery failed.",
+          );
+        }
 
         if (cancelled) {
           return;
         }
 
         setSourceRecords(
-          response.records,
+          data.records ?? [],
         );
 
         setSourceResult({
           sourcesRequested:
-            response.sourcesRequested,
+            data.sourcesRequested ?? [],
 
           sourcesSuccessful:
-            response.sourcesSuccessful,
+            data.sourcesSuccessful ?? [],
 
           sourcesFailed:
-            response.sourcesFailed,
+            data.sourcesFailed ?? [],
         });
       } catch (error) {
         if (cancelled) {

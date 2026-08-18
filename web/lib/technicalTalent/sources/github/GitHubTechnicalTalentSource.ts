@@ -11,6 +11,7 @@
 // ============================================================
 
 import type {
+  DiscoveryEvidence,
   DiscoverySource,
   DiscoveryTalentType,
   TechnicalTalentDiscoveryQuery,
@@ -345,6 +346,73 @@ function repositoryToEvidence(
  * The record represents a discovery signal and does not
  * claim verified employment or identity.
  */
+function inferRepositoryDomain(
+  repository: GitHubRepository,
+): {
+  primaryDomain: TechnicalTalentDiscoveryRecord["primaryDomain"];
+  secondaryDomains: TechnicalTalentDiscoveryRecord["secondaryDomains"];
+} {
+  const text = [
+    repository.name,
+    repository.description ?? "",
+    repository.language ?? "",
+    ...(repository.topics ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const domains: TechnicalTalentDiscoveryRecord["primaryDomain"][] = [];
+
+  if (
+    /robot|robotics|manipulation|humanoid|slam|locomotion|grasp|navigation|isaac|ros|embodied|motion planning/.test(
+      text,
+    )
+  ) {
+    domains.push("Robotics");
+  }
+
+  if (
+    /embedded|firmware|microcontroller|rtos|hardware|sensor|fpga|computer architecture|edge computing/.test(
+      text,
+    )
+  ) {
+    domains.push("Hardware / Embedded");
+  }
+
+  if (
+    /asic|semiconductor|silicon|vlsi|physical design|verification|dft|integrated circuit|chip design/.test(
+      text,
+    )
+  ) {
+    domains.push("Semiconductor");
+  }
+
+  if (
+    /machine learning|deep learning|artificial intelligence|computer vision|nlp|natural language|transformer|llm|foundation model|generative ai|reinforcement learning/.test(
+      text,
+    )
+  ) {
+    domains.push("AI / ML");
+  }
+
+  const uniqueDomains =
+    Array.from(new Set(domains));
+
+  const primaryDomain =
+    uniqueDomains[0] ??
+    "AI / ML";
+
+  return {
+    primaryDomain,
+
+    secondaryDomains:
+      uniqueDomains.filter(
+        (domain) =>
+          domain !== primaryDomain,
+      ),
+  };
+}
+
 function repositoryToRecord(
   repository: GitHubRepository,
 ): TechnicalTalentDiscoveryRecord {
@@ -364,6 +432,52 @@ function repositoryToRecord(
           name,
         }),
       );
+
+  const evidence: DiscoveryEvidence = {
+    id:
+      `github-repository:${repository.id}`,
+
+    type:
+      "Repository",
+
+    source:
+      GITHUB_SOURCE,
+
+    title:
+      repository.name,
+
+    url:
+      repository.html_url,
+
+    organization:
+      repository.owner.type ===
+      "Organization"
+        ? repository.owner.login
+        : undefined,
+
+    description:
+      repository.description ??
+      undefined,
+
+    confidence:
+      repository.stargazers_count >=
+      100
+        ? "High"
+        : repository.stargazers_count >=
+            10
+          ? "Medium"
+          : "Low",
+
+    supports: [
+      ...(repository.language
+        ? [repository.language]
+        : []),
+      ...(repository.topics ?? []),
+    ],
+
+    relevance:
+      `Public GitHub repository "${repository.name}" owned by ${repository.owner.login}.`,
+  };
 
   const talentType =
     "Engineer" as DiscoveryTalentType;
@@ -387,10 +501,9 @@ function repositoryToRecord(
 
     talentType,
 
-    primaryDomain:
-      "AI / ML",
-
-    secondaryDomains: [],
+    ...inferRepositoryDomain(
+      repository,
+    ),
 
     skills: [],
 
@@ -402,7 +515,16 @@ function repositoryToRecord(
 
     patents: [],
 
-    repositories: [],
+    repositories: [
+      {
+        repository:
+          repository.html_url,
+
+        description:
+          repository.description ??
+          undefined,
+      },
+    ],
 
     conferences: [],
 
@@ -415,7 +537,9 @@ function repositoryToRecord(
 
     sourcingSignals: [],
 
-    evidence: [],
+    evidence: [
+      evidence,
+    ],
 
     confidence:
       repository.stargazers_count >=

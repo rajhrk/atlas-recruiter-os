@@ -28,6 +28,10 @@ import {
   resolveTechnicalTalentIdentity,
 } from "@/lib/technicalTalent/technicalTalentIdentityResolver";
 import {
+  scoreTechnicalTalentCandidate,
+} from "@/lib/technicalTalent/technicalTalentFitScorer";
+
+import {
   verifyTechnicalTalentCandidate,
 } from "@/lib/technicalTalent/technicalTalentCandidateVerifier";
 import type {
@@ -760,20 +764,61 @@ export async function orchestrateTechnicalTalentDiscovery(
 
 const verifiedRecords =
   mergedRecords.map(
-    (record) => ({
-      ...record,
-
-      verification:
+    (record) => {
+      const verification =
         verifyTechnicalTalentCandidate(
           record,
-        ),
-    }),
+        );
+
+      const verifiedRecord = {
+        ...record,
+
+        verification,
+      };
+
+      return {
+        ...verifiedRecord,
+
+        fitScore:
+          scoreTechnicalTalentCandidate(
+            verifiedRecord,
+            query,
+          ),
+      };
+    },
   );
 
 const evidence =
   mergeSourceEvidence(
     executions,
   );
+
+  /**
+   * Apply the minimum fit-score threshold after
+   * verification and scoring, but before pagination.
+   *
+   * This ensures low-fit candidates never consume
+   * the requested result limit.
+   */
+  const minimumFitScore =
+    query.minimumFitScore !== undefined
+      ? Math.min(
+          Math.max(
+            query.minimumFitScore,
+            0,
+          ),
+          100,
+        )
+      : undefined;
+
+  const filteredRecords =
+    minimumFitScore === undefined
+      ? verifiedRecords
+      : verifiedRecords.filter(
+          (record) =>
+            (record.fitScore?.overall ?? 0) >=
+            minimumFitScore,
+        );
 
   const offset = Math.max(
     options.offset ?? 0,
@@ -785,11 +830,11 @@ const evidence =
     1,
   );
 
- const records =
-  verifiedRecords.slice(
-    offset,
-    offset + limit,
-  );
+  const records =
+    filteredRecords.slice(
+      offset,
+      offset + limit,
+    );
 
   const sourcesSuccessful =
     executions
@@ -825,7 +870,7 @@ const evidence =
     evidence,
 
   total:
-  verifiedRecords.length,
+  filteredRecords.length,
 
     unresolvedDuplicates:
       identityResolution.unresolvedDuplicates,
