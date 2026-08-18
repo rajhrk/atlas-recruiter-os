@@ -112,6 +112,50 @@ interface GitHubRepositorySearchResponse {
 }
 
 /**
+ * GitHub public user profile.
+ *
+ * This is person-level identity evidence and is distinct
+ * from repository-level evidence.
+ */
+interface GitHubUserProfile {
+  login: string;
+
+  id: number;
+
+  html_url: string;
+
+  name:
+    | string
+    | null;
+
+  bio:
+    | string
+    | null;
+
+  company:
+    | string
+    | null;
+
+  location:
+    | string
+    | null;
+
+  blog:
+    | string
+    | null;
+
+  email:
+    | string
+    | null;
+
+  type: string;
+
+  public_repos: number;
+
+  followers: number;
+}
+
+/**
  * GitHub API error shape.
  */
 interface GitHubApiError {
@@ -228,6 +272,24 @@ async function githubFetch<T>(
   }
 
   return response.json() as Promise<T>;
+}
+
+/**
+ * Fetch a public GitHub user profile.
+ *
+ * GitHub user profiles provide person-level identity
+ * and affiliation signals that repository search alone
+ * cannot establish.
+ */
+async function fetchGitHubUserProfile(
+  login: string,
+): Promise<GitHubUserProfile> {
+  const url =
+    `${GITHUB_API_BASE}/users/${encodeURIComponent(login)}`;
+
+  return githubFetch<GitHubUserProfile>(
+    url,
+  );
 }
 
 /**
@@ -415,6 +477,7 @@ function inferRepositoryDomain(
 
 function repositoryToRecord(
   repository: GitHubRepository,
+  profile?: GitHubUserProfile,
 ): TechnicalTalentDiscoveryRecord {
   const technologies =
     [
@@ -433,7 +496,7 @@ function repositoryToRecord(
         }),
       );
 
-  const evidence: DiscoveryEvidence = {
+  const repositoryEvidence: DiscoveryEvidence = {
     id:
       `github-repository:${repository.id}`,
 
@@ -479,19 +542,123 @@ function repositoryToRecord(
       `Public GitHub repository "${repository.name}" owned by ${repository.owner.login}.`,
   };
 
-  const talentType =
-    "Engineer" as DiscoveryTalentType;
+  const evidence: DiscoveryEvidence[] = [
+    repositoryEvidence,
+  ];
+
+  if (profile) {
+    evidence.push({
+      id:
+        `github-profile:${profile.id}`,
+
+      type:
+        "Technical Profile",
+
+      source:
+        GITHUB_SOURCE,
+
+      title:
+        `GitHub profile: ${profile.login}`,
+
+      url:
+        profile.html_url,
+
+      organization:
+        profile.company ??
+        undefined,
+
+      description:
+        [
+          profile.bio ?? "",
+          profile.location
+            ? `Location: ${profile.location}`
+            : "",
+          profile.public_repos !== undefined
+            ? `Public repositories: ${profile.public_repos}`
+            : "",
+          profile.followers !== undefined
+            ? `Followers: ${profile.followers}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+
+      confidence:
+        "High",
+
+      supports: [
+        "GitHub Identity",
+        ...(profile.company
+          ? [profile.company]
+          : []),
+        ...(profile.location
+          ? [profile.location]
+          : []),
+      ],
+
+      relevance:
+        `Public GitHub user profile for ${profile.login}.`,
+    });
+  }
+
+  const affiliations =
+    profile?.company
+      ? [
+          {
+            organization:
+              profile.company,
+
+            current:
+              undefined,
+
+            location:
+              profile.location ??
+              undefined,
+
+            evidenceIds: [
+              `github-profile:${profile.id}`,
+            ],
+          },
+        ]
+      : [];
+
+  const name =
+    profile?.name?.trim() ||
+    repository.owner.login;
+
+  const headline =
+    profile?.bio?.trim() ||
+    repository.description ||
+    `GitHub technical contributor associated with ${repository.name}`;
+
 
   return {
     id:
       `github:${repository.owner.id}`,
 
-    name:
-      repository.owner.login,
+    name,
 
-    headline:
-      repository.description ??
-      `GitHub contributor associated with ${repository.name}`,
+    firstName:
+      profile?.name
+        ?.trim()
+        ?.split(/\\s+/)[0] ||
+      undefined,
+
+    headline,
+
+    location:
+      profile?.location ??
+      undefined,
+
+    primaryDomain:
+      inferRepositoryDomain(
+        repository,
+      ).primaryDomain,
+
+    secondaryDomains:
+      inferRepositoryDomain(
+        repository,
+      ).secondaryDomains,
 
     normalizedRole:
       "Technical Contributor",
@@ -499,17 +666,14 @@ function repositoryToRecord(
     roleFamily:
       "Software Engineering",
 
-    talentType,
-
-    ...inferRepositoryDomain(
-      repository,
-    ),
+    talentType:
+      "Software Engineer" as DiscoveryTalentType,
 
     skills: [],
 
     technologies,
 
-    affiliations: [],
+    affiliations,
 
     publications: [],
 
@@ -523,6 +687,24 @@ function repositoryToRecord(
         description:
           repository.description ??
           undefined,
+
+        url:
+          repository.html_url,
+
+        owner:
+          repository.owner.login,
+
+        languages:
+          repository.language
+            ? [repository.language]
+            : undefined,
+
+        technologies:
+          repository.topics ?? [],
+
+        stars:
+          repository.stargazers_count,
+
       },
     ],
 
@@ -532,27 +714,85 @@ function repositoryToRecord(
 
     recruiterNotes: [
       "Discovered through GitHub repository evidence.",
-      "Identity and employment should be verified using additional sources before recruiter action.",
+      profile
+        ? "GitHub public profile enrichment is available as person-level identity evidence."
+        : "GitHub profile enrichment was unavailable; identity should be corroborated using additional sources.",
     ],
 
-    sourcingSignals: [],
+    sourcingSignals: [
+      {
+        type:
+          "Open Source",
 
-    evidence: [
-      evidence,
+        signal:
+          "GitHub repository contribution",
+
+        strength:
+          repository.stargazers_count >=
+          100
+            ? "High"
+            : repository.stargazers_count >=
+                10
+              ? "Medium"
+              : "Low",
+
+        evidenceIds: [
+          repositoryEvidence.id,
+        ],
+
+        explanation:
+          `Public GitHub repository "${repository.name}" provides technical evidence.`,
+      },
+
+      ...(profile
+        ? [
+            {
+              type:
+                "Company Affiliation" as const,
+
+              signal:
+                profile.company
+                  ? `GitHub profile company: ${profile.company}`
+                  : "GitHub public profile identity",
+
+              strength:
+                "High" as const,
+
+              evidenceIds: [
+                `github-profile:${profile.id}`,
+              ],
+
+              explanation:
+                `GitHub public profile provides person-level identity evidence for ${profile.login}.`,
+            },
+          ]
+        : []),
     ],
+
+    evidence,
 
     confidence:
-      repository.stargazers_count >=
-      100
+      profile
         ? "High"
         : repository.stargazers_count >=
-            10
-          ? "Medium"
-          : "Low",
+            100
+          ? "High"
+          : repository.stargazers_count >=
+              10
+            ? "Medium"
+            : "Low",
 
     approvalStatus:
       "Unreviewed",
-  };
+
+    sourceRecordIds: [
+      `github:${repository.owner.id}`,
+    ],
+
+    firstDiscoveredAt:
+      new Date().toISOString(),
+
+   };
 }
 
 /**
@@ -599,9 +839,53 @@ export class GitHubTechnicalTalentSource
           "User",
       );
 
+    const uniqueOwners =
+      Array.from(
+        new Map(
+          candidateRepositories.map(
+            (repository) => [
+              repository.owner.login,
+              repository.owner.login,
+            ],
+          ),
+        ).values(),
+      );
+
+    const profileResults =
+      await Promise.all(
+        uniqueOwners.map(
+          async (login) => {
+            try {
+              return [
+                login,
+                await fetchGitHubUserProfile(
+                  login,
+                ),
+              ] as const;
+            } catch {
+              return [
+                login,
+                undefined,
+              ] as const;
+            }
+          },
+        ),
+      );
+
+    const profiles =
+      new Map(
+        profileResults,
+      );
+
     const records =
       candidateRepositories.map(
-        repositoryToRecord,
+        (repository) =>
+          repositoryToRecord(
+            repository,
+            profiles.get(
+              repository.owner.login,
+            ),
+          ),
       );
 
     /**
