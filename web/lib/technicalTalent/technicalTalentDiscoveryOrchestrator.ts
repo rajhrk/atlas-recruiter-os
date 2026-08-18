@@ -811,13 +811,51 @@ const evidence =
         )
       : undefined;
 
-  const filteredRecords =
+  const filteredByFitScore =
     minimumFitScore === undefined
       ? verifiedRecords
       : verifiedRecords.filter(
           (record) =>
             (record.fitScore?.overall ?? 0) >=
             minimumFitScore,
+        );
+
+  /**
+   * Apply the minimum confidence threshold after
+   * verification and fit scoring.
+   *
+   * Confidence is ordered:
+   *
+   * Low < Medium < High < Very High
+   */
+  const confidenceRank: Record<
+    NonNullable<
+      TechnicalTalentDiscoveryRecord["confidence"]
+    >,
+    number
+  > = {
+    Low: 1,
+    Medium: 2,
+    High: 3,
+    "Very High": 4,
+  };
+
+  const minimumConfidenceRank =
+    query.minimumConfidence !== undefined
+      ? confidenceRank[
+          query.minimumConfidence
+        ]
+      : undefined;
+
+  const filteredRecords =
+    minimumConfidenceRank === undefined
+      ? filteredByFitScore
+      : filteredByFitScore.filter(
+          (record) =>
+            record.confidence !== undefined &&
+            confidenceRank[
+              record.confidence
+            ] >= minimumConfidenceRank,
         );
 
   const offset = Math.max(
