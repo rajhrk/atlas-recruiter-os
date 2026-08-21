@@ -11,6 +11,10 @@ import {
   GitHubTechnicalTalentEnrichment,
 } from "@/lib/technicalTalent/enrichment/sources/GitHubTechnicalTalentEnrichment";
 
+import {
+  SemanticScholarTechnicalTalentEnrichment,
+} from "@/lib/technicalTalent/enrichment/sources/SemanticScholarTechnicalTalentEnrichment";
+
 /**
  * Prevent duplicate registration during development.
  */
@@ -23,6 +27,10 @@ export function initializeTechnicalTalentEnrichment(): void {
 
   technicalTalentEnrichmentRegistry.register(
     new GitHubTechnicalTalentEnrichment(),
+  );
+
+  technicalTalentEnrichmentRegistry.register(
+    new SemanticScholarTechnicalTalentEnrichment(),
   );
 
   initialized = true;
