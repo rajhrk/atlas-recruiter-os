@@ -104,11 +104,8 @@ interface GitHubRepository {
   fork: boolean;
 }
 
-interface GitHubRepositoryResponse {
-  items: GitHubRepository[];
-
-  total_count: number;
-}
+type GitHubRepositoryResponse =
+  GitHubRepository[];
 
 function createHeaders(): HeadersInit {
   const token =
@@ -185,11 +182,25 @@ function getGitHubLogin(
     }
 
     /*
-     * Existing Atlas GitHub IDs are numeric owner IDs.
-     * They identify the account but do not give us the
-     * login directly, so this function deliberately does
-     * not fabricate a username from the ID.
+     * Existing Atlas GitHub IDs use the stable numeric
+     * GitHub owner ID. The normalized candidate may also
+     * contain the explicit GitHub login in repository
+     * ownership signals.
+     *
+     * This is trusted source identity, not name-based
+     * account guessing.
      */
+    for (
+      const repository of
+      candidate.repositories ?? []
+    ) {
+      const owner =
+        repository.owner?.trim();
+
+      if (owner) {
+        return owner;
+      }
+    }
   }
 
   return undefined;
@@ -225,6 +236,12 @@ function buildProfileEvidence(
         profile.location
           ? `Location: ${profile.location}`
           : "",
+        profile.company
+          ? `GitHub-declared affiliation: ${profile.company}`
+          : "",
+        profile.blog
+          ? `Public website: ${profile.blog}`
+          : "",
         `Public repositories: ${profile.public_repos}`,
         `Followers: ${profile.followers}`,
       ]
@@ -238,11 +255,19 @@ function buildProfileEvidence(
       "GitHub Identity",
 
       ...(profile.company
-        ? [profile.company]
+        ? [
+            `GitHub-declared affiliation: ${profile.company}`,
+          ]
         : []),
 
       ...(profile.location
         ? [profile.location]
+        : []),
+
+      ...(profile.blog
+        ? [
+            `Public website: ${profile.blog}`,
+          ]
         : []),
     ],
 
@@ -408,6 +433,23 @@ function buildPatch(
       profile.location ??
       undefined,
 
+    affiliations:
+      profile.company
+        ? [
+            {
+              organization:
+                profile.company,
+
+              current:
+                true,
+
+              evidenceIds: [
+                `github-enrichment-profile:${profile.id}`,
+              ],
+            },
+          ]
+        : undefined,
+
     skills:
       Array.from(
         skills.values(),
@@ -539,7 +581,7 @@ export class GitHubTechnicalTalentEnrichment
       );
 
     const repositories =
-      repositoriesResponse.items.filter(
+      repositoriesResponse.filter(
         (repository) =>
           !repository.fork,
       );

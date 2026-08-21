@@ -7,6 +7,10 @@ import {
   technicalTalentEnrichmentRegistry,
 } from "@/lib/technicalTalent/enrichment/technicalTalentEnrichment";
 
+import {
+  initializeTechnicalTalentEnrichment,
+} from "@/lib/technicalTalent/initializeTechnicalTalentEnrichment";
+
 import type {
   TechnicalTalentEnrichmentResult,
 } from "@/lib/technicalTalent/enrichment/technicalTalentEnrichment";
@@ -41,6 +45,7 @@ export async function enrichTechnicalTalentCandidate(
   candidate: TechnicalTalentDiscoveryRecord,
   sources: DiscoverySource[],
 ): Promise<TechnicalTalentEnrichmentOrchestrationResult> {
+  initializeTechnicalTalentEnrichment();
   const requestedSources =
     Array.from(
       new Set(
