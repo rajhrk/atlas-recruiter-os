@@ -15,6 +15,10 @@ import {
   SemanticScholarTechnicalTalentEnrichment,
 } from "@/lib/technicalTalent/enrichment/sources/SemanticScholarTechnicalTalentEnrichment";
 
+import {
+  OpenReviewTechnicalTalentEnrichment,
+} from "@/lib/technicalTalent/enrichment/sources/OpenReviewTechnicalTalentEnrichment";
+
 /**
  * Prevent duplicate registration during development.
  */
@@ -31,6 +35,10 @@ export function initializeTechnicalTalentEnrichment(): void {
 
   technicalTalentEnrichmentRegistry.register(
     new SemanticScholarTechnicalTalentEnrichment(),
+  );
+
+  technicalTalentEnrichmentRegistry.register(
+    new OpenReviewTechnicalTalentEnrichment(),
   );
 
   initialized = true;
