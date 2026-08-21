@@ -544,6 +544,163 @@ function buildIdentityKey(
     .join("|");
 }
 
+function getGitHubProfileUrls(
+  record: TechnicalTalentDiscoveryRecord,
+): string[] {
+  return record.evidence
+    .filter(
+      (evidence) =>
+        evidence.source === "GitHub" &&
+        evidence.type === "Technical Profile",
+    )
+    .map(
+      (evidence) =>
+        evidence.url,
+    )
+    .filter(
+      (
+        value,
+      ): value is string =>
+        Boolean(value),
+    )
+    .map(
+      normalizeUrl,
+    )
+    .filter(Boolean);
+}
+
+function scoreGitHubProfileIdentity(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+  reasons: DiscoveryMatchReason[],
+): number {
+  const leftUrls =
+    getGitHubProfileUrls(
+      left,
+    );
+
+  const rightUrls =
+    getGitHubProfileUrls(
+      right,
+    );
+
+  if (
+    leftUrls.length === 0 ||
+    rightUrls.length === 0
+  ) {
+    return 0;
+  }
+
+  const overlap =
+    arraysOverlap(
+      leftUrls,
+      rightUrls,
+    );
+
+  if (
+    overlap.length === 0
+  ) {
+    return 0;
+  }
+
+  addReason(
+    reasons,
+    {
+      category:
+        "Other",
+
+      signal:
+        "Shared GitHub profile identity",
+
+      weight:
+        35,
+
+      explanation:
+        "Both records contain the same normalized GitHub person profile URL.",
+    },
+  );
+
+  return 35;
+}
+
+function getPersonalWebsiteUrls(
+  record: TechnicalTalentDiscoveryRecord,
+): string[] {
+  return record.evidence
+    .filter(
+      (evidence) =>
+        evidence.type === "Personal Website",
+    )
+    .map(
+      (evidence) =>
+        evidence.url,
+    )
+    .filter(
+      (
+        value,
+      ): value is string =>
+        Boolean(value),
+    )
+    .map(
+      normalizeUrl,
+    )
+    .filter(Boolean);
+}
+
+function scorePersonalWebsiteIdentity(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+  reasons: DiscoveryMatchReason[],
+): number {
+  const leftUrls =
+    getPersonalWebsiteUrls(
+      left,
+    );
+
+  const rightUrls =
+    getPersonalWebsiteUrls(
+      right,
+    );
+
+  if (
+    leftUrls.length === 0 ||
+    rightUrls.length === 0
+  ) {
+    return 0;
+  }
+
+  const overlap =
+    arraysOverlap(
+      leftUrls,
+      rightUrls,
+    );
+
+  if (
+    overlap.length === 0
+  ) {
+    return 0;
+  }
+
+  addReason(
+    reasons,
+    {
+      category:
+        "Other",
+
+      signal:
+        "Shared personal website identity",
+
+      weight:
+        30,
+
+      explanation:
+        "Both records contain the same normalized personal website URL.",
+    },
+  );
+
+  return 30;
+}
+
 function scoreSourceIdentity(
   left: TechnicalTalentDiscoveryRecord,
   right: TechnicalTalentDiscoveryRecord,
@@ -589,6 +746,90 @@ function scoreSourceIdentity(
   );
 
   return 40;
+}
+
+/**
+ * Score OpenReview author identity.
+ *
+ * OpenReview note IDs identify publications, not people, so they
+ * must never be treated as person-level IDs. However, two records
+ * generated from OpenReview can represent the same author when:
+ *
+ * - both records originate from OpenReview,
+ * - the normalized author names match, and
+ * - there is independent research corroboration.
+ *
+ * This prevents exact-name-only merges while allowing one researcher
+ * with multiple OpenReview papers to consolidate into one Atlas record.
+ */
+function scoreOpenReviewAuthorIdentity(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+  reasons: DiscoveryMatchReason[],
+): number {
+  const leftOpenReview =
+    (left.sourceRecordIds ?? []).some(
+      (id) =>
+        id.toLowerCase().startsWith(
+          "openreview:",
+        ),
+    );
+
+  const rightOpenReview =
+    (right.sourceRecordIds ?? []).some(
+      (id) =>
+        id.toLowerCase().startsWith(
+          "openreview:",
+        ),
+    );
+
+  if (
+    !leftOpenReview ||
+    !rightOpenReview ||
+    !namesMatch(left, right)
+  ) {
+    return 0;
+  }
+
+  const leftResearch =
+    left.researchAreas ?? [];
+
+  const rightResearch =
+    right.researchAreas ?? [];
+
+  const sharedResearch =
+    arraysOverlap(
+      leftResearch.map(
+        normalizeCompact,
+      ),
+      rightResearch.map(
+        normalizeCompact,
+      ),
+    );
+
+  const hasSharedCoauthorSignal =
+    false;
+
+  if (
+    sharedResearch.length === 0 &&
+    !hasSharedCoauthorSignal
+  ) {
+    return 0;
+  }
+
+  addReason(
+    reasons,
+    {
+      category: "Other",
+      signal:
+        "OpenReview author identity corroboration",
+      weight: 25,
+      explanation:
+        `Both records originate from OpenReview, have the same normalized author name, and share ${sharedResearch.length} research area${sharedResearch.length === 1 ? "" : "s"} as independent corroboration.`,
+    },
+  );
+
+  return 25;
 }
 
 function scoreExactName(
@@ -1262,6 +1503,48 @@ function scoreHeadlineRole(
  * Resolve whether two records likely represent
  * the same technical talent identity.
  */
+function getOpenReviewPaperIds(
+  record: TechnicalTalentDiscoveryRecord,
+): string[] {
+  return (record.sourceRecordIds ?? [])
+    .filter((id) =>
+      id.toLowerCase().startsWith(
+        "openreview:",
+      ),
+    )
+    .map((id) => {
+      const parts =
+        id.split(":");
+
+      return parts.length >= 3
+        ? parts[1].toLowerCase()
+        : "";
+    })
+    .filter(Boolean);
+}
+
+function shareOpenReviewPaper(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+): boolean {
+  const leftPaperIds =
+    getOpenReviewPaperIds(left);
+
+  const rightPaperIds =
+    getOpenReviewPaperIds(right);
+
+  return leftPaperIds.some(
+    (paperId) =>
+      rightPaperIds.includes(
+        paperId,
+      ),
+  );
+}
+
+/**
+ * Resolve whether two technical talent records likely
+ * represent the same person.
+ */
 export function resolveTechnicalTalentIdentity(
   left: TechnicalTalentDiscoveryRecord,
   right: TechnicalTalentDiscoveryRecord,
@@ -1275,6 +1558,55 @@ export function resolveTechnicalTalentIdentity(
     options.reviewThreshold ??
     DEFAULT_REVIEW_THRESHOLD;
 
+  /*
+   * OpenReview records created from the same paper but
+   * different author indexes represent different people.
+   *
+   * They naturally share:
+   * - publication
+   * - research areas
+   * - technical skills
+   * - domain
+   * - role
+   * - co-authors
+   *
+   * Those are paper-level signals, not identity signals.
+   *
+   * Do not even enter identity scoring for two records
+   * that originate from the same OpenReview paper.
+   */
+  if (
+    shareOpenReviewPaper(
+      left,
+      right,
+    )
+  ) {
+    return {
+      leftIdentityKey:
+        buildIdentityKey(
+          left,
+        ),
+
+      rightIdentityKey:
+        buildIdentityKey(
+          right,
+        ),
+
+      score: 0,
+
+      confidence:
+        confidenceFromScore(
+          0,
+        ),
+
+      shouldMerge: false,
+
+      requiresReview: false,
+
+      reasons: [],
+    };
+  }
+
   const reasons: DiscoveryMatchReason[] =
     [];
 
@@ -1282,6 +1614,27 @@ export function resolveTechnicalTalentIdentity(
 
   score +=
     scoreSourceIdentity(
+      left,
+      right,
+      reasons,
+    );
+
+  score +=
+    scoreGitHubProfileIdentity(
+      left,
+      right,
+      reasons,
+    );
+
+  score +=
+    scorePersonalWebsiteIdentity(
+      left,
+      right,
+      reasons,
+    );
+
+  score +=
+    scoreOpenReviewAuthorIdentity(
       left,
       right,
       reasons,
@@ -1410,6 +1763,20 @@ export function resolveTechnicalTalentIdentity(
         "Shared external URL",
     );
 
+  const hasSharedGitHubProfile =
+    reasons.some(
+      (reason) =>
+        reason.signal ===
+        "Shared GitHub profile identity",
+    );
+
+  const hasSharedPersonalWebsite =
+    reasons.some(
+      (reason) =>
+        reason.signal ===
+        "Shared personal website identity",
+    );
+
   const hasSharedPublication =
     reasons.some(
       (reason) =>
@@ -1417,21 +1784,56 @@ export function resolveTechnicalTalentIdentity(
         "Shared publication",
     );
 
-  const corroboratingSignals =
+  const identitySignals = new Set([
+    "Shared external source identity",
+    "Shared GitHub profile identity",
+    "Shared personal website identity",
+    "Shared external URL",
+    "OpenReview author identity corroboration",
+    "Exact normalized name match",
+    "Strong partial name match",
+    "Shared publication",
+    "Shared coauthor network",
+  ]);
+
+  const identitySignalCount =
     reasons.filter(
       (reason) =>
-        reason.signal !==
-        "Exact normalized name match" &&
-        reason.signal !==
-        "Strong partial name match",
+        identitySignals.has(
+          reason.signal,
+        ),
     ).length;
 
-  const strongEvidence =
+  const hasOpenReviewAuthorCorroboration =
+    reasons.some(
+      (reason) =>
+        reason.signal ===
+        "OpenReview author identity corroboration",
+    );
+
+  const hasStrongIdentityEvidence =
     hasSourceIdentity ||
+    hasSharedGitHubProfile ||
+    hasSharedPersonalWebsite ||
     hasSharedUrl ||
+    hasOpenReviewAuthorCorroboration;
+
+  const hasModerateIdentityEvidence =
+    namesMatch(
+      left,
+      right,
+    ) &&
+    (
+      hasSharedPublication ||
+      identitySignalCount >=
+        2
+    );
+
+  const strongEvidence =
+    hasStrongIdentityEvidence ||
     (
       hasSharedPublication &&
-      corroboratingSignals >=
+      identitySignalCount >=
         2
     ) ||
     (
@@ -1439,7 +1841,7 @@ export function resolveTechnicalTalentIdentity(
         left,
         right,
       ) &&
-      corroboratingSignals >=
+      identitySignalCount >=
         3
     );
 
@@ -1451,7 +1853,11 @@ export function resolveTechnicalTalentIdentity(
   const requiresReview =
     !shouldMerge &&
     normalizedScore >=
-      reviewThreshold;
+      reviewThreshold &&
+    (
+      hasStrongIdentityEvidence ||
+      hasModerateIdentityEvidence
+    );
 
   return {
     leftIdentityKey:

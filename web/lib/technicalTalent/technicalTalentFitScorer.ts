@@ -157,6 +157,286 @@ function evidenceIdsForTechnology(
   );
 }
 
+/**
+ * Score how strongly one discovery keyword is supported by
+ * the candidate's structured technical and research profile.
+ *
+ * This is deliberately evidence-aware without relying on a
+ * hard-coded robotics vocabulary. The candidate record itself
+ * provides the technical concepts Atlas has already extracted.
+ */
+function scoreKeywordTechnicalDepth(
+  record: TechnicalTalentDiscoveryRecord,
+  keyword: string,
+): {
+  score: number;
+  matchedSignals: number;
+  relevantPublications: number;
+  relevantEvidence: number;
+} {
+  const normalizedKeyword =
+    normalize(keyword);
+
+  if (!normalizedKeyword) {
+    return {
+      score: 0,
+      matchedSignals: 0,
+      relevantPublications: 0,
+      relevantEvidence: 0,
+    };
+  }
+
+  const skillMatch =
+    record.skills.some(
+      (skill) =>
+        includesNormalized(
+          skill.name,
+          normalizedKeyword,
+        ),
+    );
+
+  const technologyMatch =
+    record.technologies.some(
+      (technology) =>
+        includesNormalized(
+          technology.name,
+          normalizedKeyword,
+        ),
+    );
+
+  const researchMatches =
+    (record.researchAreas ?? []).filter(
+      (area) =>
+        includesNormalized(
+          area,
+          normalizedKeyword,
+        ),
+    );
+
+  /*
+   * Publication relevance should not depend only on the literal
+   * query phrase appearing in the publication title.
+   *
+   * A publication can support a discovery keyword through:
+   * - its title,
+   * - its structured research areas, or
+   * - research areas on the candidate record that are themselves
+   *   semantically aligned with the requested keyword.
+   *
+   * This is particularly important for technical domains such as
+   * robot learning, where papers often use a more specific
+   * technique or application in the title.
+   */
+  const candidateResearchAreas =
+    record.researchAreas ?? [];
+
+  const keywordResearchAreas =
+    candidateResearchAreas.filter(
+      (area) =>
+        includesNormalized(
+          area,
+          normalizedKeyword,
+        ),
+    );
+
+  const relevantPublications =
+    (record.publications ?? []).filter(
+      (publication) => {
+        const titleMatch =
+          includesNormalized(
+            publication.title,
+            normalizedKeyword,
+          );
+
+        const publicationResearchAreas =
+          publication.researchAreas ?? [];
+
+        const directResearchAreaMatch =
+          publicationResearchAreas.some(
+            (area) =>
+              includesNormalized(
+                area,
+                normalizedKeyword,
+              ),
+          );
+
+        const alignedResearchAreaMatch =
+          publicationResearchAreas.some(
+            (publicationArea) =>
+              keywordResearchAreas.some(
+                (candidateArea) =>
+                  includesNormalized(
+                    publicationArea,
+                    candidateArea,
+                  ) ||
+                  includesNormalized(
+                    candidateArea,
+                    publicationArea,
+                  ),
+              ),
+          );
+
+        /*
+         * Follow the publication's evidence link.
+         *
+         * This lets Atlas recognize a paper as relevant when
+         * the paper title/research-area metadata uses a more
+         * specific technical term, but its abstract/evidence
+         * explicitly establishes the requested concept.
+         *
+         * The lookup is restricted to this publication's own
+         * evidenceId so unrelated candidate evidence cannot
+         * inflate publication relevance.
+         */
+        const linkedEvidence =
+          publication.evidenceId
+            ? (
+                record.evidence ?? []
+              ).find(
+                (item) =>
+                  item.id ===
+                  publication.evidenceId,
+              )
+            : undefined;
+
+        const linkedEvidenceMatch =
+          linkedEvidence
+            ? (
+                includesNormalized(
+                  linkedEvidence.title,
+                  normalizedKeyword,
+                ) ||
+                includesNormalized(
+                  linkedEvidence.description ?? "",
+                  normalizedKeyword,
+                ) ||
+                (
+                  linkedEvidence.supports ?? []
+                ).some(
+                  (support) =>
+                    includesNormalized(
+                      support,
+                      normalizedKeyword,
+                    ),
+                )
+              )
+            : false;
+
+        return (
+          titleMatch ||
+          directResearchAreaMatch ||
+          alignedResearchAreaMatch ||
+          linkedEvidenceMatch
+        );
+      },
+    );
+
+  const relevantEvidence =
+    (record.evidence ?? []).filter(
+      (item) =>
+        includesNormalized(
+          item.title,
+          normalizedKeyword,
+        ) ||
+        includesNormalized(
+          item.description ?? "",
+          normalizedKeyword,
+        ) ||
+        (item.supports ?? []).some(
+          (support) =>
+            includesNormalized(
+              support,
+              normalizedKeyword,
+            ),
+        ),
+    );
+
+  const signalCount =
+    Number(skillMatch) +
+    Number(technologyMatch) +
+    Math.min(
+      researchMatches.length,
+      3,
+    ) +
+    Math.min(
+      relevantPublications.length,
+      3,
+    ) +
+    Math.min(
+      relevantEvidence.length,
+      3,
+    );
+
+  /*
+   * Base relevance:
+   *
+   * Exact structured technical signal = strong.
+   * Research/publication/evidence corroboration increases depth.
+   */
+  let score =
+    skillMatch || technologyMatch
+      ? 70
+      : 0;
+
+  if (
+    !skillMatch &&
+    !technologyMatch &&
+    researchMatches.length > 0
+  ) {
+    score = 60;
+  }
+
+  if (
+    relevantPublications.length > 0
+  ) {
+    score += Math.min(
+      15,
+      relevantPublications.length * 5,
+    );
+  }
+
+  if (
+    relevantEvidence.length > 0
+  ) {
+    score += Math.min(
+      10,
+      relevantEvidence.length * 3,
+    );
+  }
+
+  if (
+    researchMatches.length > 0
+  ) {
+    score += Math.min(
+      10,
+      researchMatches.length * 3,
+    );
+  }
+
+  /*
+   * Distinct technical signals indicate depth rather than
+   * simply repeating the same keyword.
+   */
+  if (signalCount >= 5) {
+    score += 10;
+  } else if (signalCount >= 3) {
+    score += 5;
+  }
+
+  return {
+    score: Math.min(
+      100,
+      score,
+    ),
+    matchedSignals:
+      signalCount,
+    relevantPublications:
+      relevantPublications.length,
+    relevantEvidence:
+      relevantEvidence.length,
+  };
+}
+
 function scoreTechnicalMatch(
   record: TechnicalTalentDiscoveryRecord,
   query: TechnicalTalentDiscoveryQuery,
@@ -172,19 +452,74 @@ function scoreTechnicalMatch(
       query.technologies ?? [],
     );
 
-  const totalRequested =
-    requestedSkills.length +
-    requestedTechnologies.length;
+  const requestedKeywords =
+    uniqueStrings(
+      query.keywords ?? [],
+    );
 
-  if (totalRequested === 0) {
+  /*
+   * Technical scoring rules:
+   *
+   * 1. Explicit skills and technologies are the strongest
+   *    technical signals.
+   *
+   * 2. Keywords are broad discovery terms. They can match
+   *    research areas, publications, or evidence, but they
+   *    must not be counted twice when the same signal already
+   *    exists as an explicit skill/technology.
+   *
+   * 3. A keyword-only match should not automatically produce
+   *    a near-perfect technical score.
+   *
+   * 4. Multiple independent technical signals can improve
+   *    the score, so candidates with richer technical profiles
+   *    naturally rank above candidates with only one matching
+   *    phrase.
+   */
+
+  const explicitRequests = [
+    ...requestedSkills,
+    ...requestedTechnologies,
+  ];
+
+  const distinctKeywords =
+    requestedKeywords.filter(
+      (keyword) =>
+        !explicitRequests.some(
+          (request) =>
+            includesNormalized(
+              request,
+              keyword,
+            ) ||
+            includesNormalized(
+              keyword,
+              request,
+            ),
+        ),
+    );
+
+  const totalRequests =
+    explicitRequests.length +
+    distinctKeywords.length;
+
+  if (totalRequests === 0) {
     return 50;
   }
 
-  let matched = 0;
+  let scorePoints = 0;
+  let maxPoints = 0;
 
+  /*
+   * Explicit skills.
+   *
+   * These are worth more because the candidate's normalized
+   * profile explicitly identifies the skill.
+   */
   for (
     const requestedSkill of requestedSkills
   ) {
+    maxPoints += 100;
+
     const match =
       record.skills.some(
         (skill) =>
@@ -198,13 +533,14 @@ function scoreTechnicalMatch(
       continue;
     }
 
-    matched += 1;
+    scorePoints += 100;
 
     addReason(
       reasons,
       {
         category: "Skill",
-        signal: requestedSkill,
+        signal:
+          requestedSkill,
         weight:
           TECHNICAL_WEIGHT,
         explanation:
@@ -218,9 +554,14 @@ function scoreTechnicalMatch(
     );
   }
 
+  /*
+   * Explicit technologies.
+   */
   for (
     const requestedTechnology of requestedTechnologies
   ) {
+    maxPoints += 100;
+
     const match =
       record.technologies.some(
         (technology) =>
@@ -234,7 +575,7 @@ function scoreTechnicalMatch(
       continue;
     }
 
-    matched += 1;
+    scorePoints += 100;
 
     addReason(
       reasons,
@@ -255,9 +596,69 @@ function scoreTechnicalMatch(
     );
   }
 
+  /*
+   * Broad keywords.
+   *
+   * Use the technical depth engine rather than treating every
+   * keyword match as equally strong.
+   *
+   * This allows candidates with:
+   * - explicit technical skills
+   * - multiple relevant research areas
+   * - multiple relevant publications
+   * - corroborating evidence
+   *
+   * to rank above candidates who merely contain the keyword once.
+   */
+  for (
+    const keyword of distinctKeywords
+  ) {
+    maxPoints += 100;
+
+    const depth =
+      scoreKeywordTechnicalDepth(
+        record,
+        keyword,
+      );
+
+    if (
+      depth.score <= 0
+    ) {
+      continue;
+    }
+
+    scorePoints +=
+      depth.score;
+
+    addReason(
+      reasons,
+      {
+        category:
+          depth.relevantPublications > 0 ||
+          depth.relevantEvidence > 0
+            ? "Research"
+            : "Skill",
+
+        signal:
+          `Technical depth: ${keyword}`,
+
+        weight:
+          TECHNICAL_WEIGHT,
+
+        explanation:
+          `Candidate has a technical relevance score of ${depth.score}/100 for "${keyword}", supported by ${depth.matchedSignals} distinct signal${depth.matchedSignals === 1 ? "" : "s"}, ${depth.relevantPublications} relevant publication${depth.relevantPublications === 1 ? "" : "s"}, and ${depth.relevantEvidence} relevant evidence item${depth.relevantEvidence === 1 ? "" : "s"}.`,
+      },
+    );
+  }
+
+  /*
+   * Convert the weighted technical signal score into 0–100.
+   */
   return Math.round(
-    (matched /
-      totalRequested) *
+    (
+      scorePoints /
+      maxPoints
+    ) *
       100,
   );
 }
@@ -599,17 +1000,71 @@ function scoreKeywords(
     ),
     ...(record.researchAreas ??
       []),
+    ...(record.publications ?? []).flatMap(
+      (publication) => [
+        publication.title,
+        publication.venue,
+        ...(publication.researchAreas ?? []),
+      ],
+    ),
+    ...(record.evidence ?? []).flatMap(
+      (item) => [
+        item.title,
+        item.description,
+        ...(item.supports ?? []),
+      ],
+    ),
   ]
     .filter(Boolean)
     .join(" ");
 
+  /*
+   * scoreTechnicalMatch() already evaluates query keywords against
+   * structured technical signals, research areas, and technical
+   * evidence.
+   *
+   * scoreKeywords() must not award a second score for the same signal.
+   * It remains useful for explaining keyword matches, but only
+   * residual keywords that are not already represented by the
+   * structured technical/research scoring path should contribute.
+   */
   const matches =
     keywords.filter(
-      (keyword) =>
-        includesNormalized(
+      (keyword) => {
+        const matchedByStructuredTechnical =
+          record.skills.some(
+            (skill) =>
+              includesNormalized(
+                skill.name,
+                keyword,
+              ),
+          ) ||
+          record.technologies.some(
+            (technology) =>
+              includesNormalized(
+                technology.name,
+                keyword,
+              ),
+          ) ||
+          (record.researchAreas ?? []).some(
+            (area) =>
+              includesNormalized(
+                area,
+                keyword,
+              ),
+          );
+
+        if (
+          matchedByStructuredTechnical
+        ) {
+          return false;
+        }
+
+        return includesNormalized(
           searchableText,
           keyword,
-        ),
+        );
+      },
     );
 
   for (
@@ -693,15 +1148,28 @@ export function scoreTechnicalTalentCandidate(
       reasons,
     );
 
+  const hasRequestedRole =
+    (query.roleFamilies ?? []).length > 0;
+
+  const hasResidualKeywordMatch =
+    keywordScore > 0;
+
   const adjustedTechnical =
-    Math.round(
-      technicalScore *
-        0.8 +
-        roleScore *
-          0.1 +
-        keywordScore *
-          0.1,
-    );
+    hasRequestedRole
+      ? Math.round(
+          technicalScore *
+            0.9 +
+            roleScore *
+              0.1,
+        )
+      : hasResidualKeywordMatch
+        ? Math.round(
+            technicalScore *
+              0.9 +
+              keywordScore *
+                0.1,
+          )
+        : technicalScore;
 
   /**
    * Candidate fit is based on relevance and evidence strength.
@@ -711,20 +1179,82 @@ export function scoreTechnicalTalentCandidate(
    * technical/research match merely because employment evidence
    * has not yet been discovered.
    */
-  let overall =
-    Math.round(
-      adjustedTechnical *
-        (TECHNICAL_WEIGHT / 100) +
-        researchScore *
-          (RESEARCH_WEIGHT / 100) +
-        domainScore *
-          (DOMAIN_WEIGHT / 100) +
-        evidenceScore *
-          (EVIDENCE_WEIGHT / 100),
+  /*
+   * Query-aware weighting.
+   *
+   * Only dimensions explicitly requested by the recruiter
+   * participate in the final score.
+   */
+  const requestedResearchAreas =
+    uniqueStrings(
+      query.researchAreas ?? [],
     );
 
   const requestedDomains =
-    query.domains ?? [];
+    uniqueStrings(
+      query.domains ?? [],
+    );
+
+  const scoringDimensions: Array<{
+    score: number;
+    weight: number;
+  }> = [
+    {
+      score:
+        adjustedTechnical,
+      weight:
+        TECHNICAL_WEIGHT,
+    },
+    {
+      score:
+        evidenceScore,
+      weight:
+        EVIDENCE_WEIGHT,
+    },
+  ];
+
+  if (
+    requestedResearchAreas.length > 0
+  ) {
+    scoringDimensions.push({
+      score:
+        researchScore,
+      weight:
+        RESEARCH_WEIGHT,
+    });
+  }
+
+  if (
+    requestedDomains.length > 0
+  ) {
+    scoringDimensions.push({
+      score:
+        domainScore,
+      weight:
+        DOMAIN_WEIGHT,
+    });
+  }
+
+  const totalActiveWeight =
+    scoringDimensions.reduce(
+      (sum, dimension) =>
+        sum + dimension.weight,
+      0,
+    );
+
+  let overall =
+    totalActiveWeight > 0
+      ? Math.round(
+          scoringDimensions.reduce(
+            (sum, dimension) =>
+              sum +
+              dimension.score *
+                dimension.weight,
+            0,
+          ) /
+            totalActiveWeight,
+        )
+      : 0;
 
   const hasDomainMismatch =
     requestedDomains.length > 0 &&

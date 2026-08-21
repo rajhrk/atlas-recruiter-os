@@ -599,6 +599,39 @@ function repositoryToRecord(
       relevance:
         `Public GitHub user profile for ${profile.login}.`,
     });
+
+    if (profile.blog?.trim()) {
+      evidence.push({
+        id:
+          `github-website:${profile.id}`,
+
+        type:
+          "Personal Website",
+
+        source:
+          GITHUB_SOURCE,
+
+        title:
+          `Personal website: ${profile.login}`,
+
+        url:
+          profile.blog.trim(),
+
+        description:
+          `Personal website publicly linked from the GitHub profile of ${profile.login}.`,
+
+        confidence:
+          "High",
+
+        supports: [
+          "Personal Website",
+          "Identity Corroboration",
+        ],
+
+        relevance:
+          `The GitHub profile publicly links to this personal website for ${profile.login}.`,
+      });
+    }
   }
 
   const affiliations =

@@ -662,30 +662,80 @@ function createResearchSignals(
 function createTechnicalSkills(
   query: TechnicalTalentDiscoveryQuery,
   text: string,
+  keywords: string[],
+  subjectAreas: string[],
+  evidenceId: string,
 ): DiscoverySkill[] {
+  const lowerText =
+    text.toLowerCase();
+
+  /*
+   * Preserve explicitly requested technical terms first.
+   *
+   * These are the strongest query-derived signals because
+   * they directly explain why the candidate was discovered.
+   */
   const queryTerms =
     normalizeSearchTerms(
       query,
     );
 
-  const lowerText =
-    text.toLowerCase();
+  /*
+   * OpenReview already provides structured technical/research
+   * terminology through keywords and subject areas.
+   *
+   * Do not invent terminology here. Only promote terms that
+   * actually exist in the source record.
+   */
+  const sourceTerms = [
+    ...keywords,
+    ...subjectAreas,
+  ];
 
-  return queryTerms
+  const combinedTerms = [
+    ...queryTerms,
+    ...sourceTerms,
+  ]
+    .map(
+      (term) =>
+        term.trim(),
+    )
+    .filter(Boolean)
+    .filter(
+      (
+        term,
+        index,
+        values,
+      ) =>
+        values.findIndex(
+          (value) =>
+            value.toLowerCase() ===
+            term.toLowerCase(),
+        ) === index,
+    );
+
+  return combinedTerms
     .filter(
       (term) =>
         lowerText.includes(
           term.toLowerCase(),
         ),
     )
-    .slice(0, 12)
+    .slice(0, 20)
     .map(
       (
         term,
       ) => ({
         name: term,
+
         normalizedName:
-          term.toLowerCase(),
+          term
+            .toLowerCase()
+            .trim(),
+
+        evidenceIds: [
+          evidenceId,
+        ],
       }),
     );
 }
@@ -791,6 +841,9 @@ function createRecord(
     createTechnicalSkills(
       query,
       text,
+      keywords,
+      subjectAreas,
+      evidence.id,
     );
 
   const recordId =
@@ -835,12 +888,25 @@ function createRecord(
 
       technologies: [],
 
-      researchAreas: [
-        ...new Set([
-          ...keywords,
-          ...subjectAreas,
-        ]),
-      ],
+      researchAreas: Array.from(
+        new Map(
+          [
+            ...keywords,
+            ...subjectAreas,
+          ]
+            .map(
+              (area) =>
+                area.trim(),
+            )
+            .filter(Boolean)
+            .map(
+              (area) => [
+                area.toLowerCase(),
+                area,
+              ] as const,
+            ),
+        ).values(),
+      ),
 
       publications: [
         publication,
@@ -858,7 +924,7 @@ function createRecord(
         "Unreviewed",
 
       sourceRecordIds: [
-        note.id,
+        recordId,
       ],
 
       firstDiscoveredAt:

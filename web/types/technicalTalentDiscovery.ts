@@ -94,6 +94,7 @@ export type DiscoveryEvidenceType =
   | "Competition"
   | "Talk"
   | "Course"
+  | "Personal Website"
   | "Other";
 
 /**

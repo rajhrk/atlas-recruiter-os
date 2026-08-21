@@ -35,6 +35,8 @@ import {
   verifyTechnicalTalentCandidate,
 } from "@/lib/technicalTalent/technicalTalentCandidateVerifier";
 import type {
+  DiscoveryConfidence,
+  DiscoveryMatchReason,
   DiscoverySource,
   TechnicalTalentDiscoveryQuery,
   TechnicalTalentDiscoveryRecord,
@@ -77,6 +79,12 @@ export interface TechnicalTalentOrchestrationResult {
    * that require recruiter/manual review.
    */
   unresolvedDuplicates: number;
+
+  /**
+   * Explicit candidate pairs that require identity review.
+   */
+  identityReviewPairs:
+    TechnicalTalentIdentityReviewPair[];
 
   sourcesRequested: DiscoverySource[];
 
@@ -416,15 +424,46 @@ function mergeStringArrays(
     return undefined;
   }
 
+  /*
+   * Deduplicate string signals case-insensitively while
+   * preserving the first meaningful display form.
+   *
+   * Example:
+   *
+   *   "Imitation Learning"
+   *   "imitation learning"
+   *
+   * becomes:
+   *
+   *   "Imitation Learning"
+   *
+   * This is important when merging research signals from
+   * multiple publications or discovery sources.
+   */
+  const normalizedValues =
+    new Map<string, string>();
+
+  for (const value of combined) {
+    const trimmed =
+      value.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    const normalized =
+      trimmed.toLowerCase();
+
+    if (!normalizedValues.has(normalized)) {
+      normalizedValues.set(
+        normalized,
+        trimmed,
+      );
+    }
+  }
+
   return Array.from(
-    new Set(
-      combined
-        .filter(Boolean)
-        .map((value) =>
-          value.trim(),
-        )
-        .filter(Boolean),
-    ),
+    normalizedValues.values(),
   );
 }
 
@@ -605,18 +644,41 @@ function mergeSourceRecords(
  * - requiresReview=true -> keep separate and count
  * - otherwise -> keep separate
  */
+interface TechnicalTalentIdentityReviewPair {
+  leftId: string;
+
+  rightId: string;
+
+  score: number;
+
+  confidence: DiscoveryConfidence;
+
+  reasons: DiscoveryMatchReason[];
+}
+
 function resolveCrossSourceIdentities(
   records: TechnicalTalentDiscoveryRecord[],
 ): {
   records: TechnicalTalentDiscoveryRecord[];
+
   unresolvedDuplicates: number;
+
+  identityReviewPairs:
+    TechnicalTalentIdentityReviewPair[];
 } {
   const resolved:
     TechnicalTalentDiscoveryRecord[] =
     [];
 
-  let unresolvedDuplicates =
-    0;
+  const unresolvedDuplicateIds =
+    new Set<string>();
+
+  const identityReviewPairs:
+    TechnicalTalentIdentityReviewPair[] =
+    [];
+
+  const reviewPairKeys =
+    new Set<string>();
 
   for (const record of records) {
     let mergedRecord =
@@ -642,6 +704,32 @@ function resolveCrossSourceIdentities(
       if (
         identityMatch.shouldMerge
       ) {
+        console.log(
+          "[IDENTITY MERGE]",
+          JSON.stringify(
+            {
+              name: existing.name,
+              left: existing.sourceRecordIds,
+              right: mergedRecord.sourceRecordIds,
+              score: identityMatch.score,
+              confidence: identityMatch.confidence,
+              shouldMerge: identityMatch.shouldMerge,
+              requiresReview: identityMatch.requiresReview,
+              reasons: identityMatch.reasons,
+            },
+            null,
+            2,
+          ),
+        );
+
+        unresolvedDuplicateIds.delete(
+          existing.id,
+        );
+
+        unresolvedDuplicateIds.delete(
+          mergedRecord.id,
+        );
+
         mergedRecord =
           mergeRecords(
             existing,
@@ -660,8 +748,48 @@ function resolveCrossSourceIdentities(
       if (
         identityMatch.requiresReview
       ) {
-        unresolvedDuplicates +=
-          1;
+        unresolvedDuplicateIds.add(
+          mergedRecord.id,
+        );
+
+        unresolvedDuplicateIds.add(
+          existing.id,
+        );
+
+        const pairIds = [
+          existing.id,
+          mergedRecord.id,
+        ].sort();
+
+        const pairKey =
+          pairIds.join("::");
+
+        if (
+          !reviewPairKeys.has(
+            pairKey,
+          )
+        ) {
+          reviewPairKeys.add(
+            pairKey,
+          );
+
+          identityReviewPairs.push({
+            leftId:
+              pairIds[0],
+
+            rightId:
+              pairIds[1],
+
+            score:
+              identityMatch.score,
+
+            confidence:
+              identityMatch.confidence,
+
+            reasons:
+              identityMatch.reasons,
+          });
+        }
       }
     }
 
@@ -678,7 +806,10 @@ function resolveCrossSourceIdentities(
     records:
       resolved,
 
-    unresolvedDuplicates,
+    unresolvedDuplicates:
+      identityReviewPairs.length,
+
+    identityReviewPairs,
   };
 }
 
@@ -918,6 +1049,9 @@ const evidence =
 
     unresolvedDuplicates:
       identityResolution.unresolvedDuplicates,
+
+    identityReviewPairs:
+      identityResolution.identityReviewPairs,
 
     sourcesRequested,
 
