@@ -657,6 +657,33 @@ export interface TechnicalTalentDiscoveryQuery {
 }
 
 /**
+ * Graph-derived match information associated with a
+ * technical talent discovery result.
+ *
+ * This is intentionally separate from the candidate record
+ * and fitScore so graph evidence remains a derived discovery
+ * signal rather than normalized candidate state.
+ */
+export interface TechnicalTalentGraphMatch {
+  candidateId: string;
+
+  candidateLabel: string;
+
+  matchCount: number;
+
+  score: number;
+
+  paths: Array<{
+    candidateId: string;
+    candidateLabel: string;
+    nodeId: string;
+    nodeType: string;
+    nodeLabel: string;
+    relationship: string;
+  }>;
+}
+
+/**
  * Result returned by the future discovery engine.
  */
 export interface TechnicalTalentDiscoveryResult {
@@ -665,6 +692,12 @@ export interface TechnicalTalentDiscoveryResult {
   candidates: TechnicalTalentDiscoveryRecord[];
 
   total: number;
+
+  /**
+   * Graph-derived evidence for candidates returned by
+   * the discovery query.
+   */
+  graphMatches?: TechnicalTalentGraphMatch[];
 
   /**
    * Number of records requiring identity resolution.

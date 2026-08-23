@@ -18,6 +18,19 @@ import {
   scoreTechnicalTalentCandidate,
 } from "@/lib/technicalTalent/technicalTalentFitScorer";
 
+import {
+  buildTechnicalTalentGraph,
+} from "@/lib/graph/technicalTalentGraphBuilder";
+
+import type {
+  GraphNode,
+  GraphEdge,
+} from "@/types/graph";
+
+import {
+  queryTechnicalTalentGraph,
+} from "@/lib/graph/technicalTalentGraphQuery";
+
 import type {
   DiscoveryConfidence,
   DiscoveryTechnicalDomain,
@@ -461,6 +474,83 @@ function matchesQuery(
 }
 
 /**
+ * Build one technical talent graph from the candidate
+ * population currently participating in discovery.
+ *
+ * Graph matching is scoped to the active discovery
+ * population so graph evidence cannot introduce candidates
+ * that failed the deterministic discovery filters.
+ */
+function buildDiscoveryGraph(
+  candidates: TechnicalTalentDiscoveryRecord[],
+) {
+  const nodes: GraphNode[] = [];
+  const edges: GraphEdge[] = [];
+
+  for (const candidate of candidates) {
+    const candidateGraph =
+      buildTechnicalTalentGraph(
+        candidate,
+      );
+
+    for (const node of candidateGraph.nodes) {
+      if (
+        !nodes.some(
+          (existing) =>
+            existing.id === node.id &&
+            existing.type === node.type,
+        )
+      ) {
+        nodes.push(node);
+      }
+    }
+
+    for (const edge of candidateGraph.edges) {
+      if (
+        !edges.some(
+          (existing) =>
+            existing.from === edge.from &&
+            existing.to === edge.to &&
+            existing.relationship ===
+              edge.relationship,
+        )
+      ) {
+        edges.push(edge);
+      }
+    }
+  }
+
+  return {
+    nodes,
+    edges,
+  };
+}
+
+/**
+ * Convert the recruiter discovery query into the graph
+ * query contract.
+ *
+ * Only fields with a direct graph representation are mapped.
+ */
+function buildGraphQuery(
+  query: TechnicalTalentDiscoveryQuery,
+) {
+  return {
+    skills:
+      query.skills,
+
+    technologies:
+      query.technologies,
+
+    researchAreas:
+      query.researchAreas,
+
+    conferences:
+      query.conferences,
+  };
+}
+
+/**
  * Run a deterministic discovery query.
  */
 export function discoverTechnicalTalent(
@@ -561,12 +651,38 @@ export function discoverTechnicalTalent(
       offset + limit,
     );
 
+  /*
+   * Graph matching is intentionally performed after
+   * pagination.
+   *
+   * This guarantees that graphMatches corresponds exactly
+   * to the candidate page returned by this discovery query.
+   *
+   * The existing fitScore and deterministic ranking remain
+   * authoritative; graph evidence is an explainable
+   * complementary signal.
+   */
+  const graph =
+    buildDiscoveryGraph(
+      candidates,
+    );
+
+  const graphMatches =
+    queryTechnicalTalentGraph(
+      graph,
+      buildGraphQuery(
+        query,
+      ),
+    );
+
   return {
     query,
 
     candidates,
 
     total,
+
+    graphMatches,
 
     sourcesUsed: [
       "Company",
