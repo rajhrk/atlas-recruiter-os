@@ -801,10 +801,20 @@ function scoreEvidence(
     record.evidence ?? [];
 
   if (
-    evidence.length === 0
+    evidence.length ===
+    0
   ) {
     return 0;
   }
+
+  /*
+   * Evidence-first scoring deliberately avoids
+   * rewarding raw evidence volume.
+   *
+   * A small number of strong, independent,
+   * claim-connected pieces of evidence should
+   * beat a large collection of weak duplicates.
+   */
 
   const uniqueSources =
     new Set(
@@ -814,19 +824,39 @@ function scoreEvidence(
       ),
     );
 
-  const confidenceValues =
-    evidence.map(
-      (item) =>
+  /*
+   * Evidence quality.
+   *
+   * CONFIDENCE_SCORE already normalizes:
+   *
+   * Very High > High > Medium > Low
+   *
+   * Use the average rather than the maximum so
+   * one excellent item cannot completely hide
+   * a weak evidence profile.
+   */
+  const averageConfidence =
+    evidence.reduce(
+      (sum, item) =>
+        sum +
         CONFIDENCE_SCORE[
           item.confidence
         ],
+      0,
+    ) /
+    evidence.length;
+
+  const qualityScore =
+    Math.round(
+      averageConfidence,
     );
 
-  const highestConfidence =
-    Math.max(
-      ...confidenceValues,
-    );
-
+  /*
+   * Independent source diversity.
+   *
+   * Multiple sources are valuable, but the
+   * benefit diminishes after four sources.
+   */
   const sourceBreadthScore =
     Math.min(
       100,
@@ -834,21 +864,201 @@ function scoreEvidence(
         25,
     );
 
-  const evidenceCountScore =
+  /*
+   * Evidence depth with diminishing returns.
+   *
+   * 1 strong item is meaningful.
+   * 5 items are substantially better.
+   * 20 items should not produce an automatic
+   * perfect score.
+   */
+  const evidenceDepthScore =
     Math.min(
       100,
-      evidence.length *
-        20,
+      Math.round(
+        (
+          Math.log2(
+            evidence.length +
+              1,
+          ) /
+          Math.log2(6)
+        ) *
+          100,
+      ),
     );
 
+  /*
+   * Claim coverage.
+   *
+   * Evidence becomes substantially more useful
+   * when it explicitly tells Atlas what it
+   * supports:
+   *
+   *   "PyTorch"
+   *   "Computer Vision"
+   *   "Robotics Research"
+   *
+   * Evidence without supports[] is still valid,
+   * but receives less claim-level credit.
+   */
+  const supportedEvidence =
+    evidence.filter(
+      (item) =>
+        Array.isArray(
+          item.supports,
+        ) &&
+        item.supports.length >
+          0,
+    );
+
+  const claimCoverageScore =
+    Math.round(
+      (
+        supportedEvidence.length /
+        evidence.length
+      ) *
+        100,
+    );
+
+  /*
+   * Evidence type strength.
+   *
+   * Different evidence types represent
+   * different levels of technical signal.
+   *
+   * These are intentionally modest bonuses;
+   * confidence and source independence remain
+   * the primary signals.
+   */
+  const strongEvidenceTypes =
+    new Set([
+      "Open Source Contribution",
+      "Repository",
+      "Publication",
+      "Patent",
+      "Research Project",
+      "Model",
+      "Dataset",
+      "Dissertation",
+    ]);
+
+  const strongEvidenceRatio =
+    evidence.filter(
+      (item) =>
+        strongEvidenceTypes.has(
+          item.type,
+        ),
+    ).length /
+    evidence.length;
+
+  const evidenceTypeScore =
+    Math.round(
+      strongEvidenceRatio *
+        100,
+    );
+
+  /*
+   * Freshness.
+   *
+   * Recent evidence is useful for current
+   * sourcing, but old research must remain
+   * valuable. Therefore freshness is a small
+   * modifier rather than a hard gate.
+   */
+  const datedEvidence =
+    evidence.filter(
+      (item) =>
+        Boolean(item.date),
+    );
+
+  let freshnessScore = 0;
+
+  if (
+    datedEvidence.length >
+    0
+  ) {
+    const timestamps =
+      datedEvidence
+        .map(
+          (item) =>
+            item.date
+              ? Date.parse(
+                  item.date,
+                )
+              : NaN,
+        )
+        .filter(
+          (timestamp) =>
+            Number.isFinite(
+              timestamp,
+            ),
+        );
+
+    if (
+      timestamps.length >
+      0
+    ) {
+      const latest =
+        Math.max(
+          ...timestamps,
+        );
+
+      const ageDays =
+        Math.max(
+          0,
+          (
+            Date.now() -
+            latest
+          ) /
+            86_400_000,
+        );
+
+      if (
+        ageDays <=
+        180
+      ) {
+        freshnessScore =
+          100;
+      } else if (
+        ageDays <=
+        365
+      ) {
+        freshnessScore =
+          80;
+      } else if (
+        ageDays <=
+        1095
+      ) {
+        freshnessScore =
+          60;
+      } else {
+        freshnessScore =
+          40;
+      }
+    }
+  }
+
+  /*
+   * Final evidence score.
+   *
+   * Quality and source independence dominate.
+   * Claim coverage and evidence type strength
+   * reinforce technical credibility.
+   */
   const score =
     Math.round(
-      highestConfidence *
-        0.5 +
+      qualityScore *
+        0.35 +
         sourceBreadthScore *
-          0.3 +
-        evidenceCountScore *
-          0.2,
+          0.20 +
+        evidenceDepthScore *
+          0.10 +
+        claimCoverageScore *
+          0.15 +
+        evidenceTypeScore *
+          0.10 +
+        freshnessScore *
+          0.10,
     );
 
   addReason(
@@ -856,19 +1066,26 @@ function scoreEvidence(
     {
       category: "Other",
       signal:
-        `${evidence.length} evidence item${evidence.length === 1 ? "" : "s"}`,
+        `Evidence quality ${qualityScore}/100`,
       weight:
         EVIDENCE_WEIGHT,
       explanation:
-        `Candidate has ${evidence.length} evidence item${evidence.length === 1 ? "" : "s"} across ${uniqueSources.size} independent source${uniqueSources.size === 1 ? "" : "s"}.`,
+        `Candidate has ${evidence.length} evidence item${evidence.length === 1 ? "" : "s"} across ${uniqueSources.size} independent source${uniqueSources.size === 1 ? "" : "s"}, with ${supportedEvidence.length} item${supportedEvidence.length === 1 ? "" : "s"} explicitly connected to candidate claims.`,
       evidenceIds:
         evidence.map(
-          (item) => item.id,
+          (item) =>
+            item.id,
         ),
     },
   );
 
-  return score;
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      score,
+    ),
+  );
 }
 
 function scoreVerification(

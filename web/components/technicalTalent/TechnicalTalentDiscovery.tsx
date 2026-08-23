@@ -60,11 +60,97 @@ const SOURCE_OPTIONS: {
 
 type ResultCardProps = {
   record: TechnicalTalentDiscoveryRecord;
+
+  onEnriched?: (
+    candidate: TechnicalTalentDiscoveryRecord,
+  ) => void;
 };
 
 function ResultCard({
   record,
+  onEnriched,
 }: ResultCardProps) {
+  const [enriching, setEnriching] =
+    useState(false);
+
+  const [enrichmentError, setEnrichmentError] =
+    useState<string | null>(null);
+
+  const [enrichmentSummary, setEnrichmentSummary] =
+    useState<{
+      sourcesSuccessful: DiscoverySource[];
+      sourcesFailed: DiscoverySource[];
+    } | null>(null);
+
+  async function enrichCandidate() {
+    setEnriching(true);
+    setEnrichmentError(null);
+
+    try {
+      const response =
+        await fetch(
+          "/api/technical-talent/enrichment",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              candidate: record,
+
+              sources: [
+                "GitHub",
+                "Semantic Scholar",
+                "OpenReview",
+              ] as DiscoverySource[],
+            }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error ??
+            "Technical talent enrichment failed.",
+        );
+      }
+
+      const candidate =
+        data.candidate as TechnicalTalentDiscoveryRecord;
+
+      const enrichment =
+        data.enrichment as {
+          sourcesSuccessful: DiscoverySource[];
+          sourcesFailed: DiscoverySource[];
+        };
+
+      setEnrichmentSummary({
+        sourcesSuccessful:
+          enrichment.sourcesSuccessful,
+
+        sourcesFailed:
+          enrichment.sourcesFailed,
+      });
+
+      onEnriched?.(
+        candidate,
+      );
+    } catch (error) {
+      setEnrichmentError(
+        error instanceof Error
+          ? error.message
+          : "Technical talent enrichment failed.",
+      );
+    } finally {
+      setEnriching(false);
+    }
+  }
+
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -350,6 +436,64 @@ function ResultCard({
             </ul>
           </div>
         )}
+
+      <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">
+              Evidence Enrichment
+            </p>
+
+            <p className="mt-1 text-sm text-slate-600">
+              Enrich this candidate with public GitHub,
+              Semantic Scholar, and OpenReview evidence.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={enrichCandidate}
+            disabled={enriching}
+            className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {enriching
+              ? "Enriching..."
+              : "Enrich Candidate"}
+          </button>
+        </div>
+
+        {enrichmentError && (
+          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {enrichmentError}
+          </div>
+        )}
+
+        {enrichmentSummary && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {enrichmentSummary.sourcesSuccessful.map(
+              (source) => (
+                <span
+                  key={`${record.id}-${source}-success`}
+                  className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700"
+                >
+                  {source} · Enriched
+                </span>
+              ),
+            )}
+
+            {enrichmentSummary.sourcesFailed.map(
+              (source) => (
+                <span
+                  key={`${record.id}-${source}-failed`}
+                  className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700"
+                >
+                  {source} · Failed
+                </span>
+              ),
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
         <span className="text-xs text-slate-500">
@@ -688,6 +832,18 @@ export default function TechnicalTalentDiscovery() {
         domain,
       ];
     });
+  }
+
+  function handleEnrichedSourceRecord(
+    candidate: TechnicalTalentDiscoveryRecord,
+  ) {
+    setSourceRecords((current) =>
+      current.map((record) =>
+        record.id === candidate.id
+          ? candidate
+          : record,
+      ),
+    );
   }
 
   function clearSearch() {
@@ -1081,6 +1237,11 @@ export default function TechnicalTalentDiscovery() {
                     <ResultCard
                       key={record.id}
                       record={record}
+                      onEnriched={(candidate) =>
+                        handleEnrichedSourceRecord(
+                          candidate,
+                        )
+                      }
                     />
                   ),
                 )}
