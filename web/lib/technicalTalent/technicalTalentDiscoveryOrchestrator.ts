@@ -34,12 +34,26 @@ import {
 import {
   verifyTechnicalTalentCandidate,
 } from "@/lib/technicalTalent/technicalTalentCandidateVerifier";
+
+import {
+  buildTechnicalTalentGraph,
+} from "@/lib/graph/technicalTalentGraphBuilder";
+
+import {
+  queryTechnicalTalentGraph,
+} from "@/lib/graph/technicalTalentGraphQuery";
+
+import {
+  rankTechnicalTalentCandidates,
+} from "@/lib/graph/technicalTalentCombinedRanking";
 import type {
   DiscoveryConfidence,
   DiscoveryMatchReason,
   DiscoverySource,
   TechnicalTalentDiscoveryQuery,
   TechnicalTalentDiscoveryRecord,
+  TechnicalTalentGraphMatch,
+  TechnicalTalentDiscoveryRanking,
 } from "@/types/technicalTalentDiscovery";
 
 import type {
@@ -69,6 +83,17 @@ export interface TechnicalTalentOrchestrationResult {
   query: TechnicalTalentDiscoveryQuery;
 
   records: TechnicalTalentDiscoveryRecord[];
+
+  /**
+   * Graph-derived evidence for the candidates returned
+   * by the orchestrator.
+   */
+  graphMatches?: TechnicalTalentGraphMatch[];
+
+  /**
+   * Combined fit + graph ranking evidence.
+   */
+  rankings?: TechnicalTalentDiscoveryRanking[];
 
   evidence: TechnicalTalentSourceEvidence[];
 
@@ -995,6 +1020,197 @@ const evidence =
             ] >= minimumConfidenceRank,
         );
 
+  /**
+   * Build graph evidence from every candidate that survived
+   * verification, fit filtering, and confidence filtering.
+   *
+   * Graph ranking intentionally happens before pagination so
+   * strong graph evidence can influence the final candidate
+   * ordering.
+   */
+  const graphParts =
+    filteredRecords.map(
+      (record) =>
+        buildTechnicalTalentGraph(
+          record,
+        ),
+    );
+
+  const graphNodes =
+    graphParts.flatMap(
+      (part) =>
+        part.nodes,
+    );
+
+  const graphEdges =
+    graphParts.flatMap(
+      (part) =>
+        part.edges,
+    );
+
+  const graph = {
+    nodes:
+      graphNodes.filter(
+        (node, index, nodes) =>
+          nodes.findIndex(
+            (existing) =>
+              existing.id ===
+                node.id &&
+              existing.type ===
+                node.type,
+          ) === index,
+      ),
+
+    edges:
+      graphEdges.filter(
+        (edge, index, edges) =>
+          edges.findIndex(
+            (existing) =>
+              existing.from ===
+                edge.from &&
+              existing.to ===
+                edge.to &&
+              existing.relationship ===
+                edge.relationship,
+          ) === index,
+      ),
+  };
+
+  /**
+   * Convert recruiter discovery requirements into the
+   * graph query contract.
+   */
+  const graphQuery = {
+    skills:
+      query.skills,
+
+    technologies:
+      query.technologies,
+
+    researchAreas:
+      query.researchAreas,
+
+    conferences:
+      query.conferences,
+  };
+
+  const rawGraphMatches =
+    queryTechnicalTalentGraph(
+      graph,
+      graphQuery,
+    );
+
+  /**
+   * Graph candidate IDs use the canonical
+   * candidate:<discovery-id> format.
+   *
+   * The orchestrator continues exposing the original
+   * discovery candidate IDs.
+   */
+  const graphMatches =
+    rawGraphMatches.map(
+      (match) => ({
+        ...match,
+
+        candidateId:
+          match.candidateId.startsWith(
+            "candidate:",
+          )
+            ? match.candidateId.slice(
+                "candidate:".length,
+              )
+            : match.candidateId,
+      }),
+    );
+
+  const graphMatchByCandidateId =
+    new Map(
+      graphMatches.map(
+        (match) => [
+          match.candidateId,
+          match,
+        ],
+      ),
+    );
+
+  const requestedGraphSignalCount =
+    [
+      ...(query.skills ?? []),
+      ...(query.technologies ?? []),
+      ...(query.researchAreas ?? []),
+      ...(query.conferences ?? []),
+    ].length;
+
+  /**
+   * Combine the existing fit score with graph evidence.
+   *
+   * Existing fit remains 70%.
+   * Graph evidence contributes 30%.
+   *
+   * Graph enrichment was executed against the complete
+   * filtered population, so candidates with zero graph
+   * matches receive an explicit graph score of zero.
+   */
+  const combinedRankings =
+    rankTechnicalTalentCandidates(
+      filteredRecords.map(
+        (record) => ({
+          candidateId:
+            record.id,
+
+          candidateLabel:
+            record.name,
+
+          fitScore:
+            record.fitScore?.overall ??
+            0,
+
+          graphMatch:
+            graphMatchByCandidateId.get(
+              record.id,
+            ),
+
+          graphEvidenceAvailable:
+            true,
+
+          graphMatchRequestedSignalCount:
+            requestedGraphSignalCount,
+        }),
+      ),
+    );
+
+  const recordById =
+    new Map(
+      filteredRecords.map(
+        (record) => [
+          record.id,
+          record,
+        ],
+      ),
+    );
+
+  /**
+   * Reorder actual candidate records according to the
+   * combined ranking.
+   */
+  const rankedRecords =
+    combinedRankings.map(
+      (ranking) => {
+        const record =
+          recordById.get(
+            ranking.candidateId,
+          );
+
+        if (!record) {
+          throw new Error(
+            `Orchestrator ranking referenced unknown candidate: ${ranking.candidateId}`,
+          );
+        }
+
+        return record;
+      },
+    );
+
   const offset = Math.max(
     options.offset ?? 0,
     0,
@@ -1006,9 +1222,33 @@ const evidence =
   );
 
   const records =
-    filteredRecords.slice(
+    rankedRecords.slice(
       offset,
       offset + limit,
+    );
+
+  const returnedCandidateIds =
+    new Set(
+      records.map(
+        (record) =>
+          record.id,
+      ),
+    );
+
+  const paginatedGraphMatches =
+    graphMatches.filter(
+      (match) =>
+        returnedCandidateIds.has(
+          match.candidateId,
+        ),
+    );
+
+  const paginatedRankings =
+    combinedRankings.filter(
+      (ranking) =>
+        returnedCandidateIds.has(
+          ranking.candidateId,
+        ),
     );
 
   const sourcesSuccessful =
@@ -1042,10 +1282,16 @@ const evidence =
 
     records,
 
+    graphMatches:
+      paginatedGraphMatches,
+
+    rankings:
+      paginatedRankings,
+
     evidence,
 
-  total:
-  filteredRecords.length,
+    total:
+      filteredRecords.length,
 
     unresolvedDuplicates:
       identityResolution.unresolvedDuplicates,
