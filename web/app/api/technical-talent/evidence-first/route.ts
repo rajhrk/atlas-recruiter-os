@@ -4,7 +4,7 @@ import {
 
 import {
   orchestrateEvidenceFirstTechnicalTalentDiscovery,
-} from "@/lib/technicalTalent/technicalTalentEvidenceFirstDiscovery";
+} from "@/lib/technicalTalent/technicalTalentEvidenceLayer";
 
 import type {
   DiscoveryConfidence,
