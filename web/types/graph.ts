@@ -5,7 +5,12 @@ export type GraphNodeType =
   | "certification"
   | "vendor"
   | "technology"
-  | "region";
+  | "region"
+  | "candidate"
+  | "repository"
+  | "publication"
+  | "researchArea"
+  | "conference";
 
 export interface GraphNode {
   id: string;
