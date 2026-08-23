@@ -10,6 +10,10 @@ import {
   scoreTechnicalTalentCandidate,
 } from "@/lib/technicalTalent/technicalTalentFitScorer";
 
+import {
+  buildTechnicalTalentGraphForCandidate,
+} from "@/lib/technicalTalent/technicalTalentGraphService";
+
 import type {
   DiscoverySource,
   TechnicalTalentDiscoveryQuery,
@@ -178,6 +182,19 @@ export async function POST(
         );
     }
 
+    /*
+     * Build the candidate knowledge graph after
+     * enrichment and optional query-aware scoring.
+     *
+     * The graph is derived from the normalized candidate
+     * record so it reflects the same technical signals
+     * returned by the enrichment pipeline.
+     */
+    const graph =
+      buildTechnicalTalentGraphForCandidate(
+        enrichedCandidate,
+      );
+
     return Response.json(
       {
         candidate:
@@ -185,6 +202,8 @@ export async function POST(
 
         enrichment:
           orchestration,
+
+        graph,
       },
       {
         status: 200,

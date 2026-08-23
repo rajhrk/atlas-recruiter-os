@@ -109,6 +109,77 @@ async function main() {
   }
 
   if (
+    !body.graph
+  ) {
+    throw new Error(
+      "Response does not contain technical talent graph.",
+    );
+  }
+
+  if (
+    !Array.isArray(body.graph.nodes)
+  ) {
+    throw new Error(
+      "Technical talent graph nodes is not an array.",
+    );
+  }
+
+  if (
+    !Array.isArray(body.graph.edges)
+  ) {
+    throw new Error(
+      "Technical talent graph edges is not an array.",
+    );
+  }
+
+  if (
+    body.graph.nodes.length === 0
+  ) {
+    throw new Error(
+      "Technical talent graph contains no nodes.",
+    );
+  }
+
+  if (
+    body.graph.edges.length === 0
+  ) {
+    throw new Error(
+      "Technical talent graph contains no edges.",
+    );
+  }
+
+  if (
+    !body.graph.nodes.some(
+      (node: {
+        type?: string;
+      }) =>
+        node.type === "candidate",
+    )
+  ) {
+    throw new Error(
+      "Technical talent graph does not contain a candidate node.",
+    );
+  }
+
+  if (
+    !body.graph.edges.some(
+      (edge: {
+        relationship?: string;
+      }) =>
+        edge.relationship === "demonstrates" ||
+        edge.relationship === "uses" ||
+        edge.relationship === "contributes_to" ||
+        edge.relationship === "authored" ||
+        edge.relationship === "researches" ||
+        edge.relationship === "participates_in",
+    )
+  ) {
+    throw new Error(
+      "Technical talent graph does not contain an expected candidate relationship.",
+    );
+  }
+
+  if (
     body.candidate.id !==
     candidate.id
   ) {
