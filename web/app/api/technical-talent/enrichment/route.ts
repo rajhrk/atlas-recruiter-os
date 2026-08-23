@@ -6,8 +6,13 @@ import {
   mergeTechnicalTalentEnrichment,
 } from "@/lib/technicalTalent/enrichment/technicalTalentEnrichmentMerger";
 
+import {
+  scoreTechnicalTalentCandidate,
+} from "@/lib/technicalTalent/technicalTalentFitScorer";
+
 import type {
   DiscoverySource,
+  TechnicalTalentDiscoveryQuery,
   TechnicalTalentDiscoveryRecord,
 } from "@/types/technicalTalentDiscovery";
 
@@ -20,6 +25,7 @@ const VALID_SOURCES: DiscoverySource[] = [
 interface EnrichmentApiRequest {
   candidate?: TechnicalTalentDiscoveryRecord;
   sources?: DiscoverySource[];
+  query?: TechnicalTalentDiscoveryQuery;
 }
 
 function validateSources(
@@ -152,6 +158,25 @@ export async function POST(
         candidate,
         orchestration.results,
       );
+
+    /*
+     * Enrichment changes the evidence/profile surface.
+     *
+     * The merger intentionally does not own fit scoring.
+     * When the recruiter supplies a discovery query,
+     * re-score the enriched candidate against that query
+     * so newly discovered evidence can affect ranking.
+     *
+     * If no query is supplied, preserve the existing
+     * candidate fitScore for backwards compatibility.
+     */
+    if (body?.query) {
+      enrichedCandidate.fitScore =
+        scoreTechnicalTalentCandidate(
+          enrichedCandidate,
+          body.query,
+        );
+    }
 
     return Response.json(
       {

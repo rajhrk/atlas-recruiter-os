@@ -57,6 +57,15 @@ async function main() {
           sources: [
             "GitHub",
           ],
+          query: {
+            keywords: [
+              "Linux",
+              "Git",
+            ],
+            technologies: [
+              "Git",
+            ],
+          },
         }),
       },
     );
@@ -123,6 +132,58 @@ async function main() {
   ) {
     throw new Error(
       "Candidate approvalStatus was not preserved.",
+    );
+  }
+
+  if (
+    !body.candidate.fitScore
+  ) {
+    throw new Error(
+      "Enriched candidate does not contain fitScore after query-aware enrichment.",
+    );
+  }
+
+  if (
+    typeof body.candidate.fitScore.overall !==
+      "number" ||
+    body.candidate.fitScore.overall < 0 ||
+    body.candidate.fitScore.overall > 100
+  ) {
+    throw new Error(
+      "fitScore.overall is not a valid 0-100 score.",
+    );
+  }
+
+  if (
+    typeof body.candidate.fitScore.evidence !==
+      "number" ||
+    body.candidate.fitScore.evidence < 0 ||
+    body.candidate.fitScore.evidence > 100
+  ) {
+    throw new Error(
+      "fitScore.evidence is not a valid 0-100 score.",
+    );
+  }
+
+  if (
+    typeof body.candidate.fitScore.confidence !==
+      "number" ||
+    body.candidate.fitScore.confidence < 0 ||
+    body.candidate.fitScore.confidence > 100
+  ) {
+    throw new Error(
+      "fitScore.confidence is not a valid 0-100 score.",
+    );
+  }
+
+  if (
+    !Array.isArray(
+      body.candidate.fitScore.reasons,
+    ) ||
+    body.candidate.fitScore.reasons.length === 0
+  ) {
+    throw new Error(
+      "Query-aware enrichment did not produce explainable fit-score reasons.",
     );
   }
 
