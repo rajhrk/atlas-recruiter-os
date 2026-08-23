@@ -33,7 +33,7 @@ const VALID_SOURCES: DiscoverySource[] = [
   "Semantic Scholar",
 ];
 
-interface DiscoveryApiRequest {
+interface EvidenceFirstApiRequest {
   keywords?: string[];
   domains?: DiscoveryTechnicalDomain[];
   skills?: string[];
@@ -45,6 +45,13 @@ interface DiscoveryApiRequest {
   sources?: DiscoverySource[];
   limit?: number;
   offset?: number;
+  evidenceGatePolicy?: {
+    minimumEvidenceItems?: number;
+    minimumIndependentSources?: number;
+    minimumEvidenceConfidence?: DiscoveryConfidence;
+    requireDatedEvidence?: boolean;
+    requireTechnicalClaimEvidence?: boolean;
+  };
 }
 
 function cleanStrings(values: unknown): string[] | undefined {
@@ -139,33 +146,26 @@ function validateOffset(value: unknown): number | undefined {
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const body = (await request.json()) as DiscoveryApiRequest;
+    const body = (await request.json()) as EvidenceFirstApiRequest;
 
-    const keywords = cleanStrings(body?.keywords);
-    const domains = validateDomains(body?.domains);
-    const minimumConfidence = validateConfidence(body?.minimumConfidence);
-    const skills = cleanStrings(body?.skills);
-    const technologies = cleanStrings(body?.technologies);
-    const researchAreas = cleanStrings(body?.researchAreas);
-    const roleFamilies = cleanStrings(body?.roleFamilies);
-    const minimumFitScore =
-      typeof body?.minimumFitScore === "number" && Number.isFinite(body.minimumFitScore)
-        ? Math.min(Math.max(Math.floor(body.minimumFitScore), 0), 100)
-        : undefined;
+    const query: TechnicalTalentDiscoveryQuery = {
+      keywords: cleanStrings(body?.keywords),
+      domains: validateDomains(body?.domains),
+      skills: cleanStrings(body?.skills),
+      technologies: cleanStrings(body?.technologies),
+      researchAreas: cleanStrings(body?.researchAreas),
+      roleFamilies: cleanStrings(body?.roleFamilies),
+      minimumFitScore:
+        typeof body?.minimumFitScore === "number" &&
+        Number.isFinite(body.minimumFitScore)
+          ? Math.min(Math.max(Math.floor(body.minimumFitScore), 0), 100)
+          : undefined,
+      minimumConfidence: validateConfidence(body?.minimumConfidence),
+    };
+
     const sources = validateSources(body?.sources);
     const limit = validateLimit(body?.limit);
     const offset = validateOffset(body?.offset);
-
-    const query: TechnicalTalentDiscoveryQuery = {
-      keywords,
-      domains,
-      skills,
-      technologies,
-      researchAreas,
-      roleFamilies,
-      minimumFitScore,
-      minimumConfidence,
-    };
 
     initializeTechnicalTalentSources();
 
@@ -175,6 +175,14 @@ export async function POST(request: Request): Promise<Response> {
         sources,
         limit,
         offset,
+        evidenceGatePolicy: {
+          minimumEvidenceItems: 1,
+          minimumIndependentSources: 1,
+          minimumEvidenceConfidence: "Medium",
+          requireDatedEvidence: false,
+          requireTechnicalClaimEvidence: true,
+          ...(body?.evidenceGatePolicy ?? {}),
+        },
       },
     );
 
@@ -183,7 +191,7 @@ export async function POST(request: Request): Promise<Response> {
     const message =
       error instanceof Error
         ? error.message
-        : "Technical talent discovery failed.";
+        : "Evidence-first technical talent discovery failed.";
 
     return Response.json({ error: message }, { status: 400 });
   }
