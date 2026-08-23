@@ -31,6 +31,10 @@ import {
   queryTechnicalTalentGraph,
 } from "@/lib/graph/technicalTalentGraphQuery";
 
+import {
+  rankTechnicalTalentCandidates,
+} from "@/lib/graph/technicalTalentCombinedRanking";
+
 import type {
   DiscoveryConfidence,
   DiscoveryTechnicalDomain,
@@ -474,6 +478,28 @@ function matchesQuery(
 }
 
 /**
+ * Convert an Atlas discovery candidate ID into the
+ * canonical technical talent graph candidate ID.
+ */
+function graphCandidateId(
+  candidateId: string,
+): string {
+  return `candidate:${candidateId}`;
+}
+
+/**
+ * Convert a canonical graph candidate ID back into the
+ * Atlas discovery candidate ID used by the discovery API.
+ */
+function discoveryCandidateId(
+  candidateId: string,
+): string {
+  return candidateId.startsWith("candidate:")
+    ? candidateId.slice("candidate:".length)
+    : candidateId;
+}
+
+/**
  * Build one technical talent graph from the candidate
  * population currently participating in discovery.
  *
@@ -594,46 +620,126 @@ export function discoverTechnicalTalent(
     candidates.length;
 
   /**
-   * Rank strongest candidates first.
+   * Build the graph from every candidate that survived
+   * deterministic discovery filtering.
    *
-   * Tie-breakers:
-   * 1. Overall fit
-   * 2. Technical fit
-   * 3. Evidence strength
+   * Graph evidence must be available before pagination
+   * because combined ranking can change candidate order.
+   */
+  const graph =
+    buildDiscoveryGraph(
+      candidates,
+    );
+
+
+  /**
+   * Run the graph query across the full filtered
+   * candidate population.
    *
-   * Array sort in modern JavaScript is stable, so
-   * candidates with identical values retain their
-   * original discovery-index ordering.
+   * Do not apply query.limit here. Pagination must happen
+   * only after combined fit + graph ranking.
+   */
+  const graphQuery =
+    buildGraphQuery(
+      query,
+    );
+
+
+  const graphMatches =
+    queryTechnicalTalentGraph(
+      graph,
+      graphQuery,
+    );
+
+  const graphMatchByCandidateId =
+    new Map(
+      graphMatches.map(
+        (match) => [
+          match.candidateId,
+          match,
+        ],
+      ),
+    );
+
+  /**
+   * Combine the existing evidence-first fit score with
+   * graph evidence.
+   *
+   * Fit remains 70%.
+   * Graph evidence contributes 30%.
+   *
+   * Every candidate in this deterministic graph pipeline
+   * has graph evidence available, including candidates with
+   * zero graph matches. Those candidates therefore receive
+   * an explicit graph score of zero rather than being treated
+   * as unavailable.
+   */
+  const combinedRankings =
+    rankTechnicalTalentCandidates(
+      candidates.map(
+        (candidate) => ({
+          candidateId:
+            candidate.id,
+
+          candidateLabel:
+            candidate.name,
+
+          fitScore:
+            candidate.fitScore?.overall ?? 0,
+
+          graphMatch:
+            graphMatchByCandidateId.get(
+              graphCandidateId(
+                candidate.id,
+              ),
+            ),
+
+          graphEvidenceAvailable:
+            true,
+
+          graphMatchRequestedSignalCount:
+            [
+              ...(query.skills ?? []),
+              ...(query.technologies ?? []),
+              ...(query.researchAreas ?? []),
+              ...(query.conferences ?? []),
+            ].length,
+        }),
+      ),
+    );
+
+  const candidateById =
+    new Map(
+      candidates.map(
+        (candidate) => [
+          candidate.id,
+          candidate,
+        ],
+      ),
+    );
+
+  /**
+   * Reorder the actual discovery records according to
+   * the combined ranking.
    */
   candidates =
-    candidates.sort(
-      (a, b) => {
-        const overallDifference =
-          (b.fitScore?.overall ?? 0) -
-          (a.fitScore?.overall ?? 0);
+    combinedRankings.map(
+      (ranking) => {
+        const candidate =
+          candidateById.get(
+            ranking.candidateId,
+          );
 
-        if (
-          overallDifference !== 0
-        ) {
-          return overallDifference;
+        if (!candidate) {
+          throw new Error(
+            `Discovery ranking referenced unknown candidate: ${ranking.candidateId}`,
+          );
         }
 
-        const technicalDifference =
-          (b.fitScore?.technical ?? 0) -
-          (a.fitScore?.technical ?? 0);
-
-        if (
-          technicalDifference !== 0
-        ) {
-          return technicalDifference;
-        }
-
-        return (
-          (b.fitScore?.evidence ?? 0) -
-          (a.fitScore?.evidence ?? 0)
-        );
+        return candidate;
       },
     );
+
 
   const offset = Math.max(
     query.offset ?? 0,
@@ -645,44 +751,61 @@ export function discoverTechnicalTalent(
     1,
   );
 
-  candidates =
+  const paginatedCandidates =
     candidates.slice(
       offset,
       offset + limit,
     );
 
-  /*
-   * Graph matching is intentionally performed after
-   * pagination.
-   *
-   * This guarantees that graphMatches corresponds exactly
-   * to the candidate page returned by this discovery query.
-   *
-   * The existing fitScore and deterministic ranking remain
-   * authoritative; graph evidence is an explainable
-   * complementary signal.
-   */
-  const graph =
-    buildDiscoveryGraph(
-      candidates,
+  const returnedCandidateIds =
+    new Set(
+      paginatedCandidates.map(
+        (candidate) =>
+          candidate.id,
+      ),
     );
 
-  const graphMatches =
-    queryTechnicalTalentGraph(
-      graph,
-      buildGraphQuery(
-        query,
-      ),
+  const paginatedGraphMatches =
+    graphMatches
+      .filter(
+        (match) =>
+          returnedCandidateIds.has(
+            discoveryCandidateId(
+              match.candidateId,
+            ),
+          ),
+      )
+      .map(
+        (match) => ({
+          ...match,
+
+          candidateId:
+            discoveryCandidateId(
+              match.candidateId,
+            ),
+        }),
+      );
+
+  const rankings =
+    combinedRankings.filter(
+      (ranking) =>
+        returnedCandidateIds.has(
+          ranking.candidateId,
+        ),
     );
 
   return {
     query,
 
-    candidates,
+    candidates:
+      paginatedCandidates,
 
     total,
 
-    graphMatches,
+    graphMatches:
+      paginatedGraphMatches,
+
+    rankings,
 
     sourcesUsed: [
       "Company",

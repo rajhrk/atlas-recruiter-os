@@ -106,8 +106,11 @@ function main(): void {
   const candidateWasDiscovered =
     result.candidates.some(
       (candidate) =>
-        `candidate:${candidate.id}` ===
-          graphMatch.candidateId,
+        candidate.id ===
+          graphMatch.candidateId.replace(
+            /^candidate:/,
+            "",
+          ),
     );
 
   assert(
@@ -159,8 +162,11 @@ function main(): void {
   const matchedCandidate =
     result.candidates.find(
       (candidate) =>
-        `candidate:${candidate.id}` ===
-        graphMatch.candidateId,
+        candidate.id ===
+        graphMatch.candidateId.replace(
+          /^candidate:/,
+          "",
+        ),
     );
 
   assert(
@@ -268,7 +274,7 @@ function main(): void {
     new Set(
       paginatedResult.candidates.map(
         (candidate) =>
-          `candidate:${candidate.id}`,
+          candidate.id,
       ),
     );
 
@@ -276,7 +282,10 @@ function main(): void {
     paginatedResult.graphMatches!.every(
       (match) =>
         paginatedCandidateIds.has(
-          match.candidateId,
+          match.candidateId.replace(
+            /^candidate:/,
+            "",
+          ),
         ),
     ),
     "Graph matches contain candidates outside the returned discovery page.",

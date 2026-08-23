@@ -684,7 +684,30 @@ export interface TechnicalTalentGraphMatch {
 }
 
 /**
- * Result returned by the future discovery engine.
+ * Combined ranking evidence for a candidate returned by
+ * the technical talent discovery engine.
+ *
+ * This remains separate from the canonical candidate record
+ * so fitScore is not mutated by query-specific ranking.
+ */
+export interface TechnicalTalentDiscoveryRanking {
+  candidateId: string;
+
+  candidateLabel: string;
+
+  fitScore: number;
+
+  graphScore: number;
+
+  combinedScore: number;
+
+  graphMatchCount: number;
+
+  explanation: string;
+}
+
+/**
+ * Result returned by the technical talent discovery engine.
  */
 export interface TechnicalTalentDiscoveryResult {
   query: TechnicalTalentDiscoveryQuery;
@@ -698,6 +721,12 @@ export interface TechnicalTalentDiscoveryResult {
    * the discovery query.
    */
   graphMatches?: TechnicalTalentGraphMatch[];
+
+  /**
+   * Combined fit + graph ranking evidence for the
+   * candidates returned by this discovery query.
+   */
+  rankings?: TechnicalTalentDiscoveryRanking[];
 
   /**
    * Number of records requiring identity resolution.
