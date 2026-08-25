@@ -1517,7 +1517,7 @@ function getOpenReviewPaperIds(
         id.split(":");
 
       return parts.length >= 3
-        ? parts[1].toLowerCase()
+        ? parts[2].toLowerCase()
         : "";
     })
     .filter(Boolean);
