@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useAtlas } from "@/context/AtlasContext";
+import { TALENT_DOMAINS } from "@/lib/atlas/talentDomains";
 import {
   getRoleByName,
   getSkillsForRole,
@@ -15,22 +16,15 @@ function toArray(value: unknown): string[] {
     return value
       .flatMap((item) => {
         if (typeof item === "string") {
-          return item
-            .split(",")
-            .map((v) => v.trim())
-            .filter(Boolean);
+          return item.split(",").map((v) => v.trim()).filter(Boolean);
         }
-
         return String(item);
       })
       .filter(Boolean);
   }
 
   if (typeof value === "string") {
-    return value
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean);
+    return value.split(",").map((v) => v.trim()).filter(Boolean);
   }
 
   return [String(value)];
@@ -49,16 +43,9 @@ interface BadgeListProps {
   type?: "company" | "skill" | "certification" | "conference";
 }
 
-function BadgeList({
-  items,
-  type = "conference",
-}: BadgeListProps) {
+function BadgeList({ items, type = "conference" }: BadgeListProps) {
   if (items.length === 0) {
-    return (
-      <p className="mt-3 text-sm text-muted-foreground">
-        No data available.
-      </p>
-    );
+    return <p className="mt-3 text-sm text-muted-foreground">No data available.</p>;
   }
 
   return (
@@ -70,26 +57,17 @@ function BadgeList({
           case "company":
             href = `/company/${slugify(item)}`;
             break;
-
           case "skill":
             href = `/skills/${encodeURIComponent(item)}`;
             break;
-
           case "certification":
             href = `/certifications/${encodeURIComponent(item)}`;
-            break;
-
-          case "conference":
-            href = "#";
             break;
         }
 
         if (href === "#") {
           return (
-            <span
-              key={`${item}-${index}`}
-              className="rounded-full border bg-muted px-3 py-1 text-sm"
-            >
+            <span key={`${item}-${index}`} className="rounded-full border bg-muted px-3 py-1 text-sm">
               {item}
             </span>
           );
@@ -110,115 +88,75 @@ function BadgeList({
 }
 
 export default function OverviewTab() {
-  const { selectedRole } = useAtlas();
-
+  const { selectedDomain, selectedRole } = useAtlas();
+  const domain = TALENT_DOMAINS.find((item) => item.id === selectedDomain)!;
   const role = getRoleByName(selectedRole);
-  const mappedSkills = getSkillsForRole(selectedRole);
+  const mappedSkills = role ? getSkillsForRole(selectedRole) : [];
+  const preview = domain.preview;
 
-  if (!role) {
-    return (
-      <div className="rounded-lg border p-6">
-        <p>No recruiter intelligence found for this role.</p>
-      </div>
-    );
-  }
+  const data = role
+    ? {
+        role: role.role,
+        targetCompanies: toArray((role as any).targetCompanies),
+        coreSkills: toArray((role as any).coreSkills),
+        mappedSkills: mappedSkills.map((skill) => skill.skill),
+        certifications: toArray((role as any).certifications),
+        conferences: toArray((role as any).conferences),
+        notes: (role as any).recruiterNotes,
+      }
+    : {
+        role: domain.defaultRole,
+        targetCompanies: [...preview.targetCompanies],
+        coreSkills: [...preview.coreSkills],
+        mappedSkills: [...preview.mappedSkills],
+        certifications: [...preview.certifications],
+        conferences: [...preview.conferences],
+        notes: preview.notes,
+      };
 
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="space-y-4">
+      {!role && (
+        <div className="rounded-xl border bg-slate-50 p-4 text-sm text-muted-foreground">
+          Showing {domain.label} domain intelligence. Select a role above to load role-specific Atlas data.
+        </div>
+      )}
 
-      {/* Role */}
-      <div className="rounded-xl border p-5">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          👤 Role
-        </h3>
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="rounded-xl border p-5">
+          <h3 className="text-sm font-medium text-muted-foreground">👤 Role</h3>
+          <p className="mt-3 text-2xl font-bold">{data.role}</p>
+        </div>
 
-        <p className="mt-3 text-2xl font-bold">
-          {role.role}
-        </p>
-      </div>
+        <div className="rounded-xl border p-5">
+          <h3 className="text-sm font-medium text-muted-foreground">🏢 Target Companies</h3>
+          <BadgeList items={data.targetCompanies} type="company" />
+        </div>
 
-      {/* Companies */}
-      <div className="rounded-xl border p-5">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          🏢 Target Companies
-        </h3>
+        <div className="rounded-xl border p-5">
+          <h3 className="text-sm font-medium text-muted-foreground">🧠 Core Skills</h3>
+          <BadgeList items={data.coreSkills} type="skill" />
+        </div>
 
-        <BadgeList
-          items={toArray((role as any).targetCompanies)}
-          type="company"
-        />
-      </div>
+        <div className="rounded-xl border p-5">
+          <h3 className="text-sm font-medium text-muted-foreground">⚡ Mapped Skills</h3>
+          <BadgeList items={data.mappedSkills} type="skill" />
+        </div>
 
-      {/* Core Skills */}
-      <div className="rounded-xl border p-5">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          🧠 Core Skills
-        </h3>
+        <div className="rounded-xl border p-5">
+          <h3 className="text-sm font-medium text-muted-foreground">🎓 Certifications</h3>
+          <BadgeList items={data.certifications} type="certification" />
+        </div>
 
-        <BadgeList
-          items={toArray((role as any).coreSkills)}
-          type="skill"
-        />
-      </div>
+        <div className="rounded-xl border p-5">
+          <h3 className="text-sm font-medium text-muted-foreground">📅 Conferences</h3>
+          <BadgeList items={data.conferences} />
+        </div>
 
-      {/* Mapped Skills */}
-      <div className="rounded-xl border p-5">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          ⚡ Mapped Skills
-        </h3>
-
-        {mappedSkills.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            No mapped skills found.
-          </p>
-        ) : (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {mappedSkills.map((skill) => (
-              <Link
-                key={skill.skillId}
-                href={`/skills/${encodeURIComponent(skill.skill)}`}
-                className="rounded-full border bg-muted px-3 py-1 text-sm transition hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700"
-              >
-                {skill.skill}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Certifications */}
-      <div className="rounded-xl border p-5">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          🎓 Certifications
-        </h3>
-
-        <BadgeList
-          items={toArray((role as any).certifications)}
-          type="certification"
-        />
-      </div>
-
-      {/* Conferences */}
-      <div className="rounded-xl border p-5">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          📅 Conferences
-        </h3>
-
-        <BadgeList
-          items={toArray((role as any).conferences)}
-        />
-      </div>
-
-      {/* Recruiter Notes */}
-      <div className="rounded-xl border p-5 md:col-span-2">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          📝 Recruiter Notes
-        </h3>
-
-        <p className="mt-3 leading-7">
-          {(role as any).recruiterNotes ||
-            "No recruiter notes available."}
-        </p>
+        <div className="rounded-xl border p-5 md:col-span-2">
+          <h3 className="text-sm font-medium text-muted-foreground">📝 Recruiter Notes</h3>
+          <p className="mt-3 leading-7">{data.notes || "No recruiter notes available."}</p>
+        </div>
       </div>
     </div>
   );
