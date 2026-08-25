@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { AtlasProvider } from "@/context/AtlasContext";
 import Sidebar from "@/components/layout/Sidebar";
+import TalentDomainNav from "@/components/layout/TalentDomainNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,17 +34,14 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-slate-50">
         <AtlasProvider>
-
           <div className="flex min-h-screen">
-
             <Sidebar />
 
-            <main className="flex-1 overflow-auto">
+            <main className="min-w-0 flex-1 overflow-auto">
+              <TalentDomainNav />
               {children}
             </main>
-
           </div>
-
         </AtlasProvider>
       </body>
     </html>
