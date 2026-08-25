@@ -16,50 +16,48 @@ import UniversalSearch from "@/components/search/UniversalSearch";
 
 import { getAllRoles } from "@/lib/atlas/service";
 import { useAtlas } from "@/context/AtlasContext";
+import { TALENT_DOMAINS } from "@/lib/atlas/talentDomains";
 
 interface SearchFormProps {
   className?: string;
 }
 
 export function SearchForm({ className }: SearchFormProps) {
-  const { selectedRole, setSelectedRole } = useAtlas();
+  const { selectedDomain, selectedRole, setSelectedRole } = useAtlas();
 
-  const roles = getAllRoles();
+  const domain = TALENT_DOMAINS.find(
+    (item) => item.id === selectedDomain,
+  )!;
+
+  const atlasRoles = getAllRoles().map((role) => role.role);
+  const roles = Array.from(new Set([...domain.roles, ...atlasRoles]));
 
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Recruiter Search</CardTitle>
-
+        <CardTitle>{domain.label} Recruiter Search</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Search Atlas recruiter intelligence.
+          Search Atlas {domain.label.toLowerCase()} talent intelligence.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Universal Search */}
         <UniversalSearch />
 
-        {/* Filters */}
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label>Role</Label>
-
-           <Select
-  value={selectedRole}
-  onValueChange={(value) => setSelectedRole(value ?? "")}
->
+            <Select
+              value={selectedRole}
+              onValueChange={(value) => setSelectedRole(value ?? "")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
-
               <SelectContent>
                 {roles.map((role) => (
-                  <SelectItem
-                    key={role.role}
-                    value={role.role}
-                  >
-                    {role.role}
+                  <SelectItem key={role} value={role}>
+                    {role}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -68,24 +66,18 @@ export function SearchForm({ className }: SearchFormProps) {
 
           <div className="space-y-2">
             <Label>Location</Label>
-
             <Input placeholder="Singapore" />
           </div>
 
           <div className="space-y-2">
             <Label>Experience</Label>
-
             <Input placeholder="5-8 years" />
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <Button>Search</Button>
-
-          <Button variant="outline">
-            Clear
-          </Button>
+          <Button variant="outline">Clear</Button>
         </div>
       </CardContent>
     </Card>
