@@ -2,7 +2,7 @@ import Chip from "./Chip";
 
 interface InfoCardProps {
   title: string;
-  items: string[];
+  items: readonly string[];
 }
 
 export default function InfoCard({

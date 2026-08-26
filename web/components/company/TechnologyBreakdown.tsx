@@ -1,31 +1,38 @@
+import type {
+  TalentDomainId,
+} from "@/lib/atlas/talentDomains";
+
 interface Company {
   coreTechnologies: string[];
 }
 
 interface Props {
   companies: Company[];
+  domainId?: TalentDomainId;
+  domainLabel?: string;
 }
 
 export default function TechnologyBreakdown({
   companies,
+  domainLabel = "Talent",
 }: Props) {
   const technologyCounts = new Map<string, number>();
 
   companies.forEach((company) => {
     const technologies = new Set(
-      company.coreTechnologies
+      company.coreTechnologies,
     );
 
     technologies.forEach((technology) => {
       technologyCounts.set(
         technology,
-        (technologyCounts.get(technology) ?? 0) + 1
+        (technologyCounts.get(technology) ?? 0) + 1,
       );
     });
   });
 
   const breakdown = Array.from(
-    technologyCounts.entries()
+    technologyCounts.entries(),
   )
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12);
@@ -34,11 +41,12 @@ export default function TechnologyBreakdown({
     <section className="rounded-xl border bg-white p-6">
       <div>
         <h2 className="text-2xl font-bold">
-          Technology Signals
+          {domainLabel} Technology Signals
         </h2>
 
         <p className="mt-1 text-sm text-slate-600">
-          Technologies appearing across the company intelligence database.
+          Core technologies appearing across companies
+          relevant to the {domainLabel} talent domain.
         </p>
       </div>
 
@@ -47,7 +55,7 @@ export default function TechnologyBreakdown({
           const percentage =
             companies.length > 0
               ? Math.round(
-                  (count / companies.length) * 100
+                  (count / companies.length) * 100,
                 )
               : 0;
 
@@ -74,7 +82,7 @@ export default function TechnologyBreakdown({
                   style={{
                     width: `${Math.min(
                       percentage,
-                      100
+                      100,
                     )}%`,
                   }}
                 />

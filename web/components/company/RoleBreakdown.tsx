@@ -1,13 +1,20 @@
+import type {
+  TalentDomainId,
+} from "@/lib/atlas/talentDomains";
+
 interface Company {
   roles: string[];
 }
 
 interface Props {
   companies: Company[];
+  domainId?: TalentDomainId;
+  domainLabel?: string;
 }
 
 export default function RoleBreakdown({
   companies,
+  domainLabel = "Talent",
 }: Props) {
   const roleCounts = new Map<string, number>();
 
@@ -17,13 +24,13 @@ export default function RoleBreakdown({
     roles.forEach((role) => {
       roleCounts.set(
         role,
-        (roleCounts.get(role) ?? 0) + 1
+        (roleCounts.get(role) ?? 0) + 1,
       );
     });
   });
 
   const breakdown = Array.from(
-    roleCounts.entries()
+    roleCounts.entries(),
   )
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15);
@@ -32,11 +39,12 @@ export default function RoleBreakdown({
     <section className="rounded-xl border bg-white p-6">
       <div>
         <h2 className="text-2xl font-bold">
-          Hiring Role Signals
+          {domainLabel} Hiring Role Signals
         </h2>
 
         <p className="mt-1 text-sm text-slate-600">
-          Roles represented across the company intelligence database.
+          Roles represented across companies relevant to the{" "}
+          {domainLabel} talent domain.
         </p>
       </div>
 
@@ -45,7 +53,7 @@ export default function RoleBreakdown({
           const percentage =
             companies.length > 0
               ? Math.round(
-                  (count / companies.length) * 100
+                  (count / companies.length) * 100,
                 )
               : 0;
 
@@ -72,7 +80,7 @@ export default function RoleBreakdown({
                   style={{
                     width: `${Math.min(
                       percentage,
-                      100
+                      100,
                     )}%`,
                   }}
                 />
