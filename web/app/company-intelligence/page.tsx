@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import CompanyStats from "@/components/company/CompanyStats";
 import CompanyTypeBreakdown from "@/components/company/CompanyTypeBreakdown";
-import DataCenterTypeBreakdown from "@/components/company/DataCenterTypeBreakdown";
+import DomainLandscape from "@/components/company/DomainLandscape";
 import CompanyRegionBreakdown from "@/components/company/CompanyRegionBreakdown";
 import CompanyPriorityBreakdown from "@/components/company/CompanyPriorityBreakdown";
 import TechnologyBreakdown from "@/components/company/TechnologyBreakdown";
@@ -19,16 +23,40 @@ import RegionFilter from "@/components/company/RegionFilter";
 import PriorityFilter from "@/components/company/PriorityFilter";
 import DataCenterTypeFilter from "@/components/company/DataCenterTypeFilter";
 
-import { getAllCompanies } from "@/lib/atlas/companyService";
+import {
+  getUnifiedCompaniesForTalentDomain,
+} from "@/lib/atlas/domainCompanyService";
+import { TALENT_DOMAINS } from "@/lib/atlas/talentDomains";
+import { useAtlas } from "@/context/AtlasContext";
 
 export default function CompanyDirectoryPage() {
-  const companies = getAllCompanies();
+  const {
+    selectedDomain,
+  } = useAtlas();
+
+  const companies =
+    getUnifiedCompaniesForTalentDomain(
+      selectedDomain,
+    ).map(
+      (entry) => entry.company,
+    );
+
+  const domain =
+    TALENT_DOMAINS.find(
+      (item) => item.id === selectedDomain,
+    )!;
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [region, setRegion] = useState("All");
   const [priority, setPriority] = useState("All");
   const [dataCenterType, setDataCenterType] = useState("All");
+
+  useEffect(() => {
+    if (selectedDomain !== "data-center") {
+      setDataCenterType("All");
+    }
+  }, [selectedDomain]);
 
   const companyTypes = useMemo(() => {
     return Array.from(
@@ -135,14 +163,23 @@ export default function CompanyDirectoryPage() {
         </div>
 
         <h1 className="mt-2 text-4xl font-bold">
-          Company Intelligence
+          {domain.icon} {domain.label} Company Intelligence
         </h1>
 
         <p className="mt-2 max-w-3xl text-lg text-slate-600">
-          Recruiter intelligence platform for
-          hyperscalers, colocation providers, OEMs
-          and AI infrastructure companies.
+          {domain.preview.notes}
         </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {domain.preview.targetCompanies.map((company) => (
+            <span
+              key={company}
+              className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700"
+            >
+              {company}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Search */}
@@ -162,11 +199,13 @@ export default function CompanyDirectoryPage() {
           options={companyTypes}
         />
 
-        <DataCenterTypeFilter
-          selected={dataCenterType}
-          onSelect={setDataCenterType}
-          options={dataCenterTypes}
-        />
+        {selectedDomain === "data-center" && (
+          <DataCenterTypeFilter
+            selected={dataCenterType}
+            onSelect={setDataCenterType}
+            options={dataCenterTypes}
+          />
+        )}
 
         <RegionFilter
           selected={region}
@@ -194,10 +233,19 @@ export default function CompanyDirectoryPage() {
         companies={companies}
       />
 
-      {/* Data Center Landscape */}
+      {/* Domain Landscape */}
 
-      <DataCenterTypeBreakdown
+      <DomainLandscape
         companies={companies}
+        domainLabel={domain.label}
+        signalLabel={
+          selectedDomain === "data-center"
+            ? "Data center infrastructure types"
+            : "Core technologies"
+        }
+        useDataCenterTypes={
+          selectedDomain === "data-center"
+        }
       />
 
       {/* Regional Coverage */}
@@ -244,7 +292,7 @@ export default function CompanyDirectoryPage() {
 
           <div>
             <h2 className="text-2xl font-bold">
-              Company Directory
+              {domain.label} Company Directory
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">

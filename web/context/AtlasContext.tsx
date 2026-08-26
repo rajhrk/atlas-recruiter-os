@@ -26,9 +26,10 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const [selectedDomain, setSelectedDomainState] =
     useState<TalentDomainId>(DEFAULT_DOMAIN);
 
-  const [selectedRole, setSelectedRole] = useState(
-    defaultDomain.defaultRole,
-  );
+  const [selectedRole, setSelectedRole] =
+    useState<string>(
+      defaultDomain.defaultRole,
+    );
 
   function setSelectedDomain(domain: TalentDomainId) {
     setSelectedDomainState(domain);
