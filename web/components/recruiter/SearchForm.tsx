@@ -46,7 +46,7 @@ export function SearchForm({ className }: SearchFormProps) {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <UniversalSearch />
+        <UniversalSearch domainId={selectedDomain} />
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">

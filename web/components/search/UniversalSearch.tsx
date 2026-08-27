@@ -1,16 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { TalentDomainId } from "@/lib/atlas/talentDomains";
 import Link from "next/link";
 
 import { searchAtlas } from "@/lib/search/searchEngine";
 
-export default function UniversalSearch() {
+interface UniversalSearchProps {
+  domainId?: TalentDomainId;
+}
+
+export default function UniversalSearch({
+  domainId,
+}: UniversalSearchProps) {
   const [query, setQuery] = useState("");
 
   const results = useMemo(() => {
-    return searchAtlas(query);
-  }, [query]);
+    return searchAtlas(query, domainId);
+  }, [query, domainId]);
 
   return (
     <div className="w-full max-w-3xl">

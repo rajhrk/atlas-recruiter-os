@@ -1,11 +1,18 @@
 import { SearchResult } from "@/types/search";
 import { getAllKnowledgeTopics } from "@/data/recruiterKnowledge";
 import { getAllCompanies } from "@/lib/atlas/companyService";
+import {
+  getUnifiedCompaniesForTalentDomain,
+} from "@/lib/atlas/domainCompanyService";
+import type { TalentDomainId } from "@/lib/atlas/talentDomains";
 import { atlasRoles } from "@/data/atlas/roles";
 import { atlasSkills } from "@/data/atlas/skills";
 import { atlasCertifications } from "@/data/atlas/certifications";
 
-export function searchAtlas(query: string): SearchResult[] {
+export function searchAtlas(
+  query: string,
+  domainId?: TalentDomainId,
+): SearchResult[] {
   const q = query.trim().toLowerCase();
 
   if (!q) return [];
@@ -13,7 +20,20 @@ export function searchAtlas(query: string): SearchResult[] {
   const results: SearchResult[] = [];
 
   // Companies
-  getAllCompanies().forEach((company) => {
+  //
+  // Recruiter Search is domain-scoped. The homepage remains
+  // global when no domainId is supplied.
+  const companies = domainId
+    ? getUnifiedCompaniesForTalentDomain(domainId)
+    : getAllCompanies().map((company) => ({
+        company,
+        talentDomains: [],
+        curated: false,
+      }));
+
+  companies.forEach((entry) => {
+    const company = entry.company;
+
     if (
       company.name.toLowerCase().includes(q) ||
       company.aliases.some((a) => a.toLowerCase().includes(q))
@@ -21,7 +41,17 @@ export function searchAtlas(query: string): SearchResult[] {
       results.push({
         id: company.id,
         title: company.name,
-        subtitle: company.companyType,
+        subtitle: domainId
+          ? domainId === "data-center"
+            ? company.companyType
+            : domainId === "ai-ml"
+              ? "AI/ML"
+              : domainId === "software"
+                ? "Software"
+                : domainId === "robotics"
+                  ? "Robotics"
+                  : "Hardware"
+          : company.companyType,
         type: "company",
         href: `/company/${company.id}`,
       });
