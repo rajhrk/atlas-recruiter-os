@@ -19,6 +19,11 @@ import {
   openReviewTechnicalTalentSource,
 } from "@/lib/technicalTalent/sources/research/OpenReviewTechnicalTalentSource";
 
+
+import {
+  arxivTechnicalTalentSource,
+} from "@/lib/technicalTalent/sources/research/ArxivTechnicalTalentSource";
+
 /**
  * Prevent duplicate registration during development.
  */
@@ -39,6 +44,11 @@ export function initializeTechnicalTalentSources(): void {
 
   technicalTalentSourceRegistry.register(
     openReviewTechnicalTalentSource,
+  );
+
+
+  technicalTalentSourceRegistry.register(
+    arxivTechnicalTalentSource,
   );
 
   initialized = true;
