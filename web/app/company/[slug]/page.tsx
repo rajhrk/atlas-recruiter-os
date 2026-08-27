@@ -104,15 +104,19 @@ export default async function CompanyPage({
       sidebar={
         <QuickFacts
           items={[
-            {
-              label: "Company Type",
-              value:
-                domainIntelligence.companyType ??
-                domainLabel,
-            },
+            ...(domainIntelligence.companyType
+              ? [
+                  {
+                    label: "Company Type",
+                    value: domainIntelligence.companyType,
+                  },
+                ]
+              : []),
             {
               label: "Priority",
-              value: company.priority,
+              value:
+                domainIntelligence.priority ??
+                company.priority,
             },
             {
               label: "HQ",
