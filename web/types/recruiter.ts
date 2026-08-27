@@ -1,5 +1,7 @@
+import type { TalentDomainId } from "@/lib/atlas/talentDomains";
+
 export interface RecruiterSearchRequest {
-  domain: string;
+  domain: TalentDomainId;
   role: string;
   location: string;
   seniority: string;

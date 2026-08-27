@@ -13,7 +13,10 @@ export default function RecruiterWorkspace() {
     useState<RecruiterSearchRequest | null>(null);
 
   const intelligence = search
-    ? getRoleIntelligence(search.role)
+    ? getRoleIntelligence(
+        search.domain,
+        search.role,
+      )
     : null;
 
   return (

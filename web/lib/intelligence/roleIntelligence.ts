@@ -1,3 +1,8 @@
+import {
+  TALENT_DOMAINS,
+  type TalentDomainId,
+} from "@/lib/atlas/talentDomains";
+
 export interface RoleIntelligence {
   role: string;
   overview: string;
@@ -52,6 +57,45 @@ const roleDatabase: Record<string, RoleIntelligence> = {
   },
 };
 
-export function getRoleIntelligence(role: string): RoleIntelligence | null {
-  return roleDatabase[role.trim().toLowerCase()] ?? null;
+function normalizeRole(role: string): string {
+  return role.trim().toLowerCase();
+}
+
+function isRoleAllowedForDomain(
+  domainId: TalentDomainId,
+  role: string,
+): boolean {
+  const domain = TALENT_DOMAINS.find(
+    (item) => item.id === domainId,
+  );
+
+  if (!domain) {
+    return false;
+  }
+
+  return domain.roles.some(
+    (domainRole) =>
+      normalizeRole(domainRole) ===
+      normalizeRole(role),
+  );
+}
+
+export function getRoleIntelligence(
+  domainId: TalentDomainId,
+  role: string,
+): RoleIntelligence | null {
+  if (
+    !isRoleAllowedForDomain(
+      domainId,
+      role,
+    )
+  ) {
+    return null;
+  }
+
+  return (
+    roleDatabase[
+      normalizeRole(role)
+    ] ?? null
+  );
 }
