@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 
 import UniversalSearch from "@/components/search/UniversalSearch";
 
-import { getAllRoles } from "@/lib/atlas/service";
 import { useAtlas } from "@/context/AtlasContext";
 import { TALENT_DOMAINS } from "@/lib/atlas/talentDomains";
 
@@ -29,8 +28,13 @@ export function SearchForm({ className }: SearchFormProps) {
     (item) => item.id === selectedDomain,
   )!;
 
-  const atlasRoles = getAllRoles().map((role) => role.role);
-  const roles = Array.from(new Set([...domain.roles, ...atlasRoles]));
+  /*
+   * Recruiter Search is domain-scoped.
+   *
+   * Do not merge the global Atlas role registry here.
+   * The selected talent domain owns the valid role universe.
+   */
+  const roles = domain.roles;
 
   return (
     <Card className={className}>
