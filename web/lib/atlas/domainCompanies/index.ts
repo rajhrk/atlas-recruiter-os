@@ -116,7 +116,13 @@ export const DOMAIN_COMPANY_SEEDS: TalentDomainCompanySeed[] = [
   },
   {
     name: "Meta",
-    domains: ["software", "ai-ml", "data-center"],
+    domains: [
+      "software",
+      "ai-ml",
+      "robotics",
+      "hardware",
+      "data-center",
+    ],
   },
   {
     name: "Salesforce",
