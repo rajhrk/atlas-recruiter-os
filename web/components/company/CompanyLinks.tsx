@@ -4,18 +4,33 @@ import { getRolesForCompany } from "@/lib/atlas/companyRelationships";
 import { getSkillsForCompany } from "@/lib/atlas/companySkills";
 import { getHiringGuidesForCompany } from "@/lib/atlas/companyHiringGuides";
 
+import type { TalentDomainId } from "@/lib/atlas/talentDomains";
+
 interface Props {
   companyName: string;
   certifications?: string[];
+  domainId: TalentDomainId;
 }
 
 export default function CompanyLinks({
   companyName,
   certifications = [],
+  domainId,
 }: Props) {
-  const roles = getRolesForCompany(companyName);
-  const skills = getSkillsForCompany(companyName);
-  const guides = getHiringGuidesForCompany(companyName);
+  const roles =
+    domainId === "data-center"
+      ? getRolesForCompany(companyName)
+      : [];
+
+  const skills =
+    domainId === "data-center"
+      ? getSkillsForCompany(companyName)
+      : [];
+
+  const guides =
+    domainId === "data-center"
+      ? getHiringGuidesForCompany(companyName)
+      : [];
 
   return (
     <section className="space-y-8 rounded-xl border bg-slate-50 p-6">

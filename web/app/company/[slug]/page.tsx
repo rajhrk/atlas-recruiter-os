@@ -8,6 +8,13 @@ import StringGrid from "@/components/intelligence/StringGrid";
 import TextCard from "@/components/intelligence/TextCard";
 import AIPromptCard from "@/components/intelligence/AIPromptCard";
 
+import {
+  getCompanyDomainIntelligence,
+  getTalentDomainLabel,
+} from "@/lib/atlas/companyDomainIntelligenceService";
+
+import type { TalentDomainId } from "@/lib/atlas/talentDomains";
+
 import CompanyLinks from "@/components/company/CompanyLinks";
 import HiringSignals from "@/components/company/HiringSignals";
 import HiringIntelligence from "@/components/company/HiringIntelligence";
@@ -17,10 +24,13 @@ import { getCompanyById } from "@/lib/atlas/companyService";
 
 export default async function CompanyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ domain?: string }>;
 }) {
   const { slug } = await params;
+  const { domain } = await searchParams;
 
   const company = getCompanyById(slug);
 
@@ -28,12 +38,42 @@ export default async function CompanyPage({
     notFound();
   }
 
+  const requestedDomain = domain as TalentDomainId | undefined;
+
+  /*
+   * Company pages opened from Recruiter Search carry the
+   * selected talent domain in the URL.
+   *
+   * Until the remaining domain profiles are populated,
+   * Data Center preserves the existing company intelligence
+   * while other domains intentionally remain empty rather
+   * than inheriting Data Center data.
+   */
+  const domainId: TalentDomainId =
+    requestedDomain ?? "data-center";
+
+  const domainIntelligence =
+    getCompanyDomainIntelligence(
+      company.id,
+      domainId,
+    );
+
+  if (!domainIntelligence) {
+    notFound();
+  }
+
+  const domainLabel =
+    getTalentDomainLabel(domainId);
+
   return (
     <IntelligencePage
       header={
         <CompanyHero
           name={company.name}
-          companyType={company.companyType}
+          companyType={
+            domainIntelligence.companyType ??
+            domainLabel
+          }
           headquarters={company.headquarters}
         />
       }
@@ -46,16 +86,16 @@ export default async function CompanyPage({
               value: company.regions.length.toString(),
             },
             {
-              label: "Data Center Types",
-              value: company.dataCenterTypes.length.toString(),
-            },
-            {
-              label: "Roles",
-              value: company.roles.length.toString(),
+              label: "Target Roles",
+              value: domainIntelligence.targetRoles.length.toString(),
             },
             {
               label: "Technologies",
-              value: company.coreTechnologies.length.toString(),
+              value: domainIntelligence.coreTechnologies.length.toString(),
+            },
+            {
+              label: "Certifications",
+              value: domainIntelligence.certifications.length.toString(),
             },
           ]}
         />
@@ -66,7 +106,9 @@ export default async function CompanyPage({
           items={[
             {
               label: "Company Type",
-              value: company.companyType,
+              value:
+                domainIntelligence.companyType ??
+                domainLabel,
             },
             {
               label: "Priority",
@@ -85,70 +127,80 @@ export default async function CompanyPage({
       }
     >
       <HiringSignals
-        priority={company.priority}
-        roles={company.roles}
-        technologies={company.coreTechnologies}
-        certifications={company.certifications}
+        priority={
+          domainIntelligence.priority ??
+          company.priority
+        }
+        roles={domainIntelligence.targetRoles}
+        technologies={domainIntelligence.coreTechnologies}
+        certifications={domainIntelligence.certifications}
       />
 
       <HiringIntelligence
-        roles={company.roles}
-        technologies={company.coreTechnologies}
-        vendors={company.strategicVendors}
-        certifications={company.certifications}
-        recruiterNotes={company.recruiterNotes}
+        roles={domainIntelligence.targetRoles}
+        technologies={domainIntelligence.coreTechnologies}
+        vendors={domainIntelligence.strategicVendors}
+        certifications={domainIntelligence.certifications}
+        recruiterNotes={domainIntelligence.recruiterNotes}
       />
 
       <SourcingSignals
         aliases={company.aliases}
-        roles={company.roles}
-        technologies={company.coreTechnologies}
-        vendors={company.strategicVendors}
-        certifications={company.certifications}
+        roles={domainIntelligence.targetRoles}
+        technologies={domainIntelligence.coreTechnologies}
+        vendors={domainIntelligence.strategicVendors}
+        certifications={domainIntelligence.certifications}
       />
 
-      <StringGrid
-        title="Data Center Types"
-        items={company.dataCenterTypes}
-      />
+      {domainIntelligence.dataCenterTypes &&
+        domainIntelligence.dataCenterTypes.length > 0 && (
+          <StringGrid
+            title="Data Center Types"
+            items={domainIntelligence.dataCenterTypes}
+          />
+        )}
 
       <StringGrid
         title="Regions"
         items={company.regions}
       />
 
-      <StringGrid
-        title="Data Center Presence"
-        items={company.dataCenterPresence}
-      />
+      {domainIntelligence.dataCenterPresence &&
+        domainIntelligence.dataCenterPresence.length > 0 && (
+          <StringGrid
+            title="Data Center Presence"
+            items={domainIntelligence.dataCenterPresence}
+          />
+        )}
 
       <StringGrid
         title="Core Technologies"
-        items={company.coreTechnologies}
+        items={domainIntelligence.coreTechnologies}
       />
 
       <StringGrid
         title="Strategic Vendors"
-        items={company.strategicVendors}
+        items={domainIntelligence.strategicVendors}
       />
 
       <StringGrid
         title="Certifications"
-        items={company.certifications}
+        items={domainIntelligence.certifications}
       />
 
       <CompanyLinks
         companyName={company.name}
-        certifications={company.certifications}
+        certifications={domainIntelligence.certifications}
+        domainId={domainId}
       />
 
       <TextCard
         title="Recruiter Notes"
-        text={company.recruiterNotes}
+        text={domainIntelligence.recruiterNotes}
       />
 
       <AIPromptCard
-        prompt={company.aiPrompt}
+        prompt={domainIntelligence.aiPrompt}
       />
     </IntelligencePage>
   );

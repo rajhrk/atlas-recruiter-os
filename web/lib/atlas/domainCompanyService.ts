@@ -10,8 +10,9 @@ import {
   getCompanyTalentDomains,
 } from "@/lib/atlas/companyTalentDomains";
 
-import type {
-  TalentDomainId,
+import {
+  TALENT_DOMAINS,
+  type TalentDomainId,
 } from "@/lib/atlas/talentDomains";
 
 import type {
@@ -198,6 +199,36 @@ export function getUnifiedCompaniesForTalentDomain(
         domainId,
       ),
   );
+}
+
+/**
+ * Return the recruiter-facing company classification for a
+ * selected talent domain.
+ *
+ * The global companyType remains authoritative for the company
+ * itself. This function determines how the company should be
+ * presented inside a domain-scoped recruiter workflow.
+ *
+ * Data Center intentionally preserves the existing companyType
+ * because classifications such as Hyperscaler and Colocation
+ * Provider are meaningful specifically in that domain.
+ *
+ * Other domains use their canonical talent-domain label rather
+ * than leaking Data Center classifications such as Hyperscaler.
+ */
+export function getCompanyTalentClassification(
+  company: AtlasCompany,
+  domainId: TalentDomainId,
+): string {
+  if (domainId === "data-center") {
+    return company.companyType;
+  }
+
+  const domain = TALENT_DOMAINS.find(
+    (item) => item.id === domainId,
+  );
+
+  return domain?.label ?? "Company";
 }
 
 /**

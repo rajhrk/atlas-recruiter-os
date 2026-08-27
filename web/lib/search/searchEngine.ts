@@ -2,6 +2,7 @@ import { SearchResult } from "@/types/search";
 import { getAllKnowledgeTopics } from "@/data/recruiterKnowledge";
 import { getAllCompanies } from "@/lib/atlas/companyService";
 import {
+  getCompanyTalentClassification,
   getUnifiedCompaniesForTalentDomain,
 } from "@/lib/atlas/domainCompanyService";
 import type { TalentDomainId } from "@/lib/atlas/talentDomains";
@@ -42,18 +43,15 @@ export function searchAtlas(
         id: company.id,
         title: company.name,
         subtitle: domainId
-          ? domainId === "data-center"
-            ? company.companyType
-            : domainId === "ai-ml"
-              ? "AI/ML"
-              : domainId === "software"
-                ? "Software"
-                : domainId === "robotics"
-                  ? "Robotics"
-                  : "Hardware"
+          ? getCompanyTalentClassification(
+              company,
+              domainId,
+            )
           : company.companyType,
         type: "company",
-        href: `/company/${company.id}`,
+        href: domainId
+          ? `/company/${company.id}?domain=${encodeURIComponent(domainId)}`
+          : `/company/${company.id}`,
       });
     }
   });
