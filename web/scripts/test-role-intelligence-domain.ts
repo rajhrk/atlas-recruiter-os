@@ -34,6 +34,64 @@ function main(): void {
     "PASS: Data Center + Critical Facilities Engineer",
   );
 
+  const softwareRoles = [
+    "Software Engineer",
+    "Backend Engineer",
+    "Full Stack Engineer",
+    "Frontend Engineer",
+    "Platform Engineer",
+    "Infrastructure Engineer",
+    "Distributed Systems Engineer",
+    "SRE",
+  ] as const;
+
+  console.log(
+    "\n===== SOFTWARE ROLES =====",
+  );
+
+  for (const role of softwareRoles) {
+    const result =
+      getRoleIntelligence(
+        "software",
+        role,
+      );
+
+    assert(
+      result !== null,
+      `software + ${role} should return role intelligence.`,
+    );
+
+    assert(
+      result?.role === role,
+      `software + ${role} returned unexpected role intelligence.`,
+    );
+
+    console.log(
+      `PASS: software + ${role}`,
+    );
+  }
+
+  console.log(
+    "\n===== SOFTWARE → DATA CENTER REJECTION =====",
+  );
+
+  for (const role of softwareRoles) {
+    const result =
+      getRoleIntelligence(
+        "data-center",
+        role,
+      );
+
+    assert(
+      result === null,
+      `data-center must reject ${role}.`,
+    );
+
+    console.log(
+      `PASS: data-center rejects ${role}`,
+    );
+  }
+
   /*
    * AI/ML role universe must match TALENT_DOMAINS.
    */

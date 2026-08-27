@@ -270,6 +270,254 @@ const roleDatabase: Record<string, RoleIntelligence> = {
     ],
   },
 
+  "software engineer": {
+    role: "Software Engineer",
+    overview:
+      "Designs, builds, tests and maintains software systems, applying software engineering principles across application development, APIs, architecture, testing and production delivery.",
+    companies: [
+      "Google",
+      "Microsoft",
+      "Amazon",
+      "Meta",
+      "Stripe",
+      "Cloudflare",
+    ],
+    skills: [
+      "Software Engineering",
+      "Algorithms",
+      "Data Structures",
+      "System Design",
+      "APIs",
+      "Git",
+      "Testing",
+      "CI/CD",
+    ],
+    certifications: [],
+    conferences: [
+      "QCon",
+      "OSDI",
+      "USENIX ATC",
+      "SREcon",
+    ],
+  },
+
+  "backend engineer": {
+    role: "Backend Engineer",
+    overview:
+      "Builds scalable server-side systems, APIs and services, working with databases, distributed systems, service architecture and production reliability.",
+    companies: [
+      "Google",
+      "Microsoft",
+      "Amazon",
+      "Meta",
+      "Stripe",
+      "Cloudflare",
+    ],
+    skills: [
+      "Backend Development",
+      "Distributed Systems",
+      "APIs",
+      "Microservices",
+      "Databases",
+      "SQL",
+      "System Design",
+      "Concurrency",
+    ],
+    certifications: [],
+    conferences: [
+      "QCon",
+      "OSDI",
+      "USENIX ATC",
+      "KubeCon",
+    ],
+  },
+
+  "full stack engineer": {
+    role: "Full Stack Engineer",
+    overview:
+      "Develops end-to-end web applications across frontend, backend, APIs, databases and deployment infrastructure.",
+    companies: [
+      "Google",
+      "Microsoft",
+      "Amazon",
+      "Meta",
+      "Stripe",
+      "Shopify",
+    ],
+    skills: [
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Node.js",
+      "APIs",
+      "Databases",
+      "Web Development",
+      "System Design",
+    ],
+    certifications: [],
+    conferences: [
+      "QCon",
+      "JSConf",
+      "React Summit",
+      "KubeCon",
+    ],
+  },
+
+  "frontend engineer": {
+    role: "Frontend Engineer",
+    overview:
+      "Builds performant, accessible and maintainable user interfaces and web applications, working across frontend architecture, browser technologies and user experience.",
+    companies: [
+      "Google",
+      "Microsoft",
+      "Meta",
+      "Stripe",
+      "Cloudflare",
+      "Shopify",
+    ],
+    skills: [
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "HTML",
+      "CSS",
+      "Web Performance",
+      "Accessibility",
+      "Frontend Architecture",
+    ],
+    certifications: [],
+    conferences: [
+      "JSConf",
+      "React Summit",
+      "QCon",
+      "Web Summit",
+    ],
+  },
+
+  "platform engineer": {
+    role: "Platform Engineer",
+    overview:
+      "Builds internal platforms and tooling that enable engineering teams to develop, deploy and operate software reliably at scale.",
+    companies: [
+      "Google",
+      "Microsoft",
+      "Amazon",
+      "Netflix",
+      "Cloudflare",
+      "Stripe",
+    ],
+    skills: [
+      "Kubernetes",
+      "Terraform",
+      "CI/CD",
+      "Cloud Infrastructure",
+      "Developer Platforms",
+      "Docker",
+      "Infrastructure as Code",
+      "Automation",
+    ],
+    certifications: [],
+    conferences: [
+      "KubeCon",
+      "QCon",
+      "SREcon",
+      "PlatformCon",
+    ],
+  },
+
+  "infrastructure engineer": {
+    role: "Infrastructure Engineer",
+    overview:
+      "Designs and operates the infrastructure required to run reliable software systems, spanning cloud platforms, Linux, networking, automation and production environments.",
+    companies: [
+      "Google",
+      "Microsoft",
+      "Amazon",
+      "Meta",
+      "Cloudflare",
+      "Netflix",
+    ],
+    skills: [
+      "Linux",
+      "Cloud Infrastructure",
+      "Networking",
+      "Kubernetes",
+      "Terraform",
+      "Docker",
+      "Automation",
+      "Infrastructure as Code",
+    ],
+    certifications: [],
+    conferences: [
+      "KubeCon",
+      "SREcon",
+      "LISA",
+      "QCon",
+    ],
+  },
+
+  "distributed systems engineer": {
+    role: "Distributed Systems Engineer",
+    overview:
+      "Designs and develops distributed computing systems that operate reliably and efficiently across multiple machines, services and geographic environments.",
+    companies: [
+      "Google",
+      "Microsoft",
+      "Amazon",
+      "Meta",
+      "Cloudflare",
+      "Datadog",
+    ],
+    skills: [
+      "Distributed Systems",
+      "Concurrency",
+      "Fault Tolerance",
+      "Consensus",
+      "Networking",
+      "Databases",
+      "System Design",
+      "Performance Engineering",
+    ],
+    certifications: [],
+    conferences: [
+      "OSDI",
+      "SOSP",
+      "USENIX ATC",
+      "QCon",
+    ],
+  },
+
+  "sre": {
+    role: "SRE",
+    overview:
+      "Improves the reliability, availability and performance of production systems through automation, observability, incident response and engineering-driven operations.",
+    companies: [
+      "Google",
+      "Amazon",
+      "Microsoft",
+      "Meta",
+      "Netflix",
+      "Cloudflare",
+    ],
+    skills: [
+      "Site Reliability Engineering",
+      "Observability",
+      "Incident Response",
+      "Kubernetes",
+      "Linux",
+      "Automation",
+      "Monitoring",
+      "Performance Engineering",
+    ],
+    certifications: [],
+    conferences: [
+      "SREcon",
+      "KubeCon",
+      "QCon",
+      "LISA",
+    ],
+  },
+
   "critical facilities engineer": {
     role: "Critical Facilities Engineer",
 
