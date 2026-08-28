@@ -121,6 +121,12 @@ async function main(): Promise<void> {
     domains: [
       "Robotics",
     ],
+
+    limit:
+      10,
+
+    offset:
+      0,
   };
 
   const builtQuery =
@@ -194,6 +200,48 @@ async function main(): Promise<void> {
   assert(
     result.hasMore === true,
     "Scholar pagination is detected",
+  );
+
+  assert(
+    result.nextCursor === "2",
+    "Scholar next page is mapped to Atlas nextCursor",
+  );
+
+  /*
+   * ------------------------------------------------------------
+   * OFFSET PAGINATION
+   * ------------------------------------------------------------
+   */
+
+  const secondPageResult =
+    await source.search({
+      query: {
+        ...discoveryQuery,
+
+        offset:
+          10,
+      },
+
+      requestedSource:
+        "Google Scholar",
+
+      requestedAt:
+        new Date().toISOString(),
+    });
+
+  assert(
+    capturedPage === 2,
+    "Atlas offset 10 maps to Scholar page 2",
+  );
+
+  assert(
+    capturedLimit === 10,
+    "Atlas limit 10 is passed to Scholar",
+  );
+
+  assert(
+    secondPageResult.nextCursor === "2",
+    "Second-page Scholar result preserves nextCursor",
   );
 
   assert(

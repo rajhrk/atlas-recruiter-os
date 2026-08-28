@@ -626,11 +626,27 @@ export function createGoogleScholarTechnicalTalentSource(
           sourceQuery.query,
         );
 
-      const page =
-        1;
-
       const limit =
-        10;
+        Math.min(
+          Math.max(
+            sourceQuery.query.limit ??
+              10,
+            1,
+          ),
+          20,
+        );
+
+      const offset =
+        Math.max(
+          sourceQuery.query.offset ??
+            0,
+          0,
+        );
+
+      const page =
+        Math.floor(
+          offset / limit,
+        ) + 1;
 
       const result =
         await provider.search(
@@ -712,6 +728,11 @@ export function createGoogleScholarTechnicalTalentSource(
 
         hasMore:
           result.nextPage !== undefined,
+
+        nextCursor:
+          result.nextPage !== undefined
+            ? String(result.nextPage)
+            : undefined,
 
         searchedAt:
           new Date().toISOString(),
