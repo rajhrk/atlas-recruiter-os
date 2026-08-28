@@ -12,16 +12,8 @@ import type {
 } from "@/types/companyDomainIntelligence";
 
 import {
-  META_AI_ML_INTELLIGENCE,
-} from "@/data/atlas/companyDomainIntelligence/meta";
-
-import {
-  META_ROBOTICS_INTELLIGENCE,
-} from "@/data/atlas/companyDomainIntelligence/metaRobotics";
-
-import {
-  META_HARDWARE_INTELLIGENCE,
-} from "@/data/atlas/companyDomainIntelligence/metaHardware";
+  getRegisteredCompanyDomainIntelligence,
+} from "@/lib/atlas/companyDomainIntelligenceRegistry";
 
 function emptyDomainIntelligence(
   company: AtlasCompany,
@@ -70,31 +62,20 @@ export function getCompanyDomainIntelligence(
 
   /*
    * ============================================================
-   * DATA CENTER
+   * REGISTERED DOMAIN INTELLIGENCE
    * ============================================================
    *
-   * Preserve the existing Data Center intelligence while
-   * migrating the company model to domain-specific profiles.
+   * Domain-specific profiles take precedence over the
+   * legacy global company record.
    */
-  if (
-    company.id === "meta" &&
-    domainId === "ai-ml"
-  ) {
-    return META_AI_ML_INTELLIGENCE;
-  }
+  const registeredIntelligence =
+    getRegisteredCompanyDomainIntelligence(
+      company.id,
+      domainId,
+    );
 
-  if (
-    company.id === "meta" &&
-    domainId === "robotics"
-  ) {
-    return META_ROBOTICS_INTELLIGENCE;
-  }
-
-  if (
-    company.id === "meta" &&
-    domainId === "hardware"
-  ) {
-    return META_HARDWARE_INTELLIGENCE;
+  if (registeredIntelligence) {
+    return registeredIntelligence;
   }
 
   if (domainId === "data-center") {

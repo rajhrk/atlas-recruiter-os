@@ -162,12 +162,12 @@ function main(): void {
     );
 
   assert(
-    roboticsMeta === undefined,
-    "Meta must NOT appear in Robotics search.",
+    roboticsMeta !== undefined,
+    "Meta must appear in Robotics search.",
   );
 
   console.log(
-    "PASS: Robotics → Meta rejected",
+    "PASS: Robotics → Meta",
   );
 
   /*
@@ -190,12 +190,12 @@ function main(): void {
     );
 
   assert(
-    hardwareMeta === undefined,
-    "Meta must NOT appear in Hardware search.",
+    hardwareMeta !== undefined,
+    "Meta must appear in Hardware search.",
   );
 
   console.log(
-    "PASS: Hardware → Meta rejected",
+    "PASS: Hardware → Meta",
   );
 
   /*
