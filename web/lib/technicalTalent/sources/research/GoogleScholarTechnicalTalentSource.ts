@@ -35,6 +35,10 @@ import type {
   TechnicalTalentSourceResult,
 } from "@/types/technicalTalentDiscoverySource";
 
+import {
+  serpApiGoogleScholarProvider,
+} from "@/lib/technicalTalent/providers/research/SerpApiGoogleScholarProvider";
+
 const GOOGLE_SCHOLAR_SOURCE =
   "Google Scholar" as DiscoverySource;
 
@@ -745,14 +749,14 @@ export function createGoogleScholarTechnicalTalentSource(
 }
 
 /**
- * Default unconfigured adapter.
+ * Default production Google Scholar adapter.
  *
- * This lets Atlas register Google Scholar immediately while
- * safely preventing accidental live requests.
+ * The provider itself safely handles a missing
+ * SERPAPI_API_KEY without making an unauthenticated request.
  */
 export const googleScholarTechnicalTalentSource =
   createGoogleScholarTechnicalTalentSource(
-    null,
+    serpApiGoogleScholarProvider,
   );
 
 export default googleScholarTechnicalTalentSource;
