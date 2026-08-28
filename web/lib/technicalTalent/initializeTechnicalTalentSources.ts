@@ -24,6 +24,11 @@ import {
   arxivTechnicalTalentSource,
 } from "@/lib/technicalTalent/sources/research/ArxivTechnicalTalentSource";
 
+
+import {
+  googleScholarTechnicalTalentSource,
+} from "@/lib/technicalTalent/sources/research/GoogleScholarTechnicalTalentSource";
+
 /**
  * Prevent duplicate registration during development.
  */
@@ -49,6 +54,11 @@ export function initializeTechnicalTalentSources(): void {
 
   technicalTalentSourceRegistry.register(
     arxivTechnicalTalentSource,
+  );
+
+
+  technicalTalentSourceRegistry.register(
+    googleScholarTechnicalTalentSource,
   );
 
   initialized = true;
