@@ -42,6 +42,16 @@ import {
 const GOOGLE_SCHOLAR_SOURCE =
   "Google Scholar" as DiscoverySource;
 
+/**
+ * Maximum number of Scholar author profiles to enrich during
+ * a single discovery request.
+ *
+ * This protects SerpApi usage while allowing the discovery
+ * result set to remain larger than the enrichment set.
+ */
+const GOOGLE_SCHOLAR_AUTHOR_ENRICHMENT_LIMIT =
+  10;
+
 const GOOGLE_SCHOLAR_CAPABILITIES:
   TechnicalTalentSourceCapabilities = {
   identity: true,
@@ -93,6 +103,48 @@ export interface GoogleScholarAuthor {
   researchInterests?: string[];
 
   citationCount?: number;
+
+  citationsSince2021?: number;
+
+  hIndex?: number;
+
+  hIndexSince2021?: number;
+
+  i10Index?: number;
+
+  i10IndexSince2021?: number;
+}
+
+/**
+ * Normalized Google Scholar author profile.
+ *
+ * This represents author-level enrichment retrieved from
+ * the Google Scholar author profile endpoint.
+ */
+export interface GoogleScholarAuthorProfile
+  extends GoogleScholarAuthor {
+  authorId: string;
+
+  name: string;
+
+  profileUrl?: string;
+
+  website?: string;
+
+  citationHistory?: Array<{
+    year: number;
+    citations: number;
+  }>;
+
+  articles?: Array<{
+    title: string;
+    url?: string;
+    citationId?: string;
+    authors?: string;
+    publication?: string;
+    year?: number;
+    citationCount?: number;
+  }>;
 }
 
 /**
@@ -144,6 +196,10 @@ export interface GoogleScholarProvider {
     page: number,
     limit: number,
   ): Promise<GoogleScholarProviderResult>;
+
+  getAuthorProfile(
+    authorId: string,
+  ): Promise<GoogleScholarAuthorProfile | null>;
 }
 
 /**
@@ -570,14 +626,275 @@ export function normalizeGoogleScholarPublication(
         confidence:
           publicationEvidence.confidence,
 
-        identityVerified:
-          false,
-
         notes:
           "Google Scholar research signal. Identity and current employment require corroboration from other sources.",
       };
     },
   );
+}
+
+/**
+ * Enrich a normalized Scholar candidate from the author's
+ * Google Scholar profile.
+ *
+ * Author enrichment is deliberately best-effort. A failure for
+ * one author must not prevent the remaining Scholar results
+ * from being returned.
+ */
+async function enrichGoogleScholarCandidate(
+  record: TechnicalTalentDiscoveryRecord,
+  provider: GoogleScholarProvider,
+): Promise<TechnicalTalentDiscoveryRecord> {
+  const authorId =
+    record.id;
+
+  if (
+    !authorId ||
+    authorId.startsWith("google-scholar-")
+  ) {
+    return record;
+  }
+
+  let profile:
+    | GoogleScholarAuthorProfile
+    | null;
+
+  try {
+    profile =
+      await provider.getAuthorProfile(
+        authorId,
+      );
+  } catch {
+    return record;
+  }
+
+  if (!profile) {
+    return record;
+  }
+
+  const enrichmentEvidenceIds =
+    record.evidence.map(
+      (item) => item.id,
+    );
+
+  if (profile.affiliation) {
+    const alreadyHasAffiliation =
+      record.affiliations?.some(
+        (affiliation) =>
+          affiliation.organization.toLowerCase() ===
+          profile.affiliation?.toLowerCase(),
+      );
+
+    if (!alreadyHasAffiliation) {
+      record.affiliations = [
+        ...(record.affiliations ?? []),
+        {
+          organization:
+            profile.affiliation,
+          current:
+            true,
+          evidenceIds:
+            enrichmentEvidenceIds,
+        },
+      ];
+    }
+  }
+
+  const researchInterests =
+    profile.researchInterests ?? [];
+
+  const existingResearchAreas =
+    new Set(
+      (
+        record.researchAreas ??
+        []
+      ).map(
+        (area) =>
+          area.toLowerCase(),
+      ),
+    );
+
+  record.researchAreas = [
+    ...(record.researchAreas ?? []),
+    ...researchInterests.filter(
+      (interest) =>
+        !existingResearchAreas.has(
+          interest.toLowerCase(),
+        ),
+    ),
+  ];
+
+  const existingSkills =
+    new Set(
+      record.skills
+        .map(
+          (skill) =>
+            skill.normalizedName?.toLowerCase(),
+        )
+        .filter(
+          (
+            name,
+          ): name is string =>
+            Boolean(name),
+        ),
+    );
+
+  record.skills = [
+    ...record.skills,
+    ...researchInterests
+      .filter(
+        (interest) =>
+          !existingSkills.has(
+            interest.toLowerCase(),
+          ),
+      )
+      .map(
+        (interest) => ({
+          name:
+            interest,
+          normalizedName:
+            interest.toLowerCase(),
+          evidenceIds:
+            enrichmentEvidenceIds,
+        }),
+      ),
+  ];
+
+  const metrics: Array<{
+    label: string;
+    value: number | undefined;
+  }> = [
+    {
+      label:
+        "Google Scholar citations",
+      value:
+        profile.citationCount,
+    },
+    {
+      label:
+        "Google Scholar h-index",
+      value:
+        profile.hIndex,
+    },
+    {
+      label:
+        "Google Scholar i10-index",
+      value:
+        profile.i10Index,
+    },
+    {
+      label:
+        "Google Scholar citations since 2021",
+      value:
+        profile.citationsSince2021,
+    },
+  ];
+
+  metrics.forEach(
+    ({
+      label,
+      value,
+    }) => {
+      if (value === undefined) {
+        return;
+      }
+
+      const evidence: DiscoveryEvidence = {
+        id:
+          `google-scholar-profile-${record.id}-${label
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")}`,
+        source:
+          GOOGLE_SCHOLAR_SOURCE,
+        type:
+          "Technical Profile",
+        title:
+          label,
+        description:
+          `${label}: ${value}.`,
+        url:
+          profile.profileUrl,
+        confidence:
+          "High",
+        date:
+          new Date().toISOString(),
+      };
+
+      record.evidence.push(
+        evidence,
+      );
+
+      record.sourcingSignals =
+        [
+          ...(record.sourcingSignals ?? []),
+          {
+            type:
+              "Research Activity",
+            signal:
+              `${label}: ${value}`,
+            strength:
+              "High",
+            evidenceIds: [
+              evidence.id,
+            ],
+            explanation:
+              "Google Scholar author-profile metrics provide an academic research-impact signal for technical talent discovery.",
+          },
+        ];
+    },
+  );
+
+  const existingPublicationTitles =
+    new Set(
+      (
+        record.publications ??
+        []
+      ).map(
+        (publication) =>
+          publication.title.toLowerCase(),
+      ),
+    );
+
+  for (
+    const article of
+      profile.articles ?? []
+  ) {
+    const title =
+      article.title.trim();
+
+    if (
+      !title ||
+      existingPublicationTitles.has(
+        title.toLowerCase(),
+      )
+    ) {
+      continue;
+    }
+
+    record.publications = [
+      ...(record.publications ?? []),
+      {
+        title,
+        url:
+          article.url,
+        year:
+          article.year,
+        citationCount:
+          article.citationCount,
+      },
+    ];
+
+    existingPublicationTitles.add(
+      title.toLowerCase(),
+    );
+  }
+
+  record.sourceRecordIds = [
+    ...(record.sourceRecordIds ?? []),
+    authorId,
+  ];
+
+  return record;
 }
 
 /**
@@ -715,6 +1032,35 @@ export function createGoogleScholarTechnicalTalentSource(
           );
         },
       );
+
+      /*
+       * Enrich a bounded number of candidates from their
+       * Google Scholar author profiles.
+       *
+       * Author enrichment is deliberately best-effort:
+       * one failed profile lookup must not fail the search.
+       */
+      const enrichmentTargets =
+        records
+          .filter(
+            (record) =>
+              !record.id.startsWith(
+                "google-scholar-",
+              ),
+          )
+          .slice(
+            0,
+            GOOGLE_SCHOLAR_AUTHOR_ENRICHMENT_LIMIT,
+          );
+
+      for (
+        const record of enrichmentTargets
+      ) {
+        await enrichGoogleScholarCandidate(
+          record,
+          provider,
+        );
+      }
 
       return {
         source:

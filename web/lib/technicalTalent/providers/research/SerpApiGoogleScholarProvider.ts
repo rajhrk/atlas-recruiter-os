@@ -20,6 +20,7 @@
 
 import type {
   GoogleScholarAuthor,
+  GoogleScholarAuthorProfile,
   GoogleScholarPublication,
   GoogleScholarProvider,
   GoogleScholarProviderResult,
@@ -64,6 +65,58 @@ interface SerpApiOrganicResult {
 interface SerpApiError {
   error?: string;
   message?: string;
+}
+
+interface SerpApiAuthorProfileArticle {
+  title?: string;
+  link?: string;
+  citation_id?: string;
+  authors?: string;
+  publication?: string;
+  year?: string | number;
+  cited_by?: {
+    value?: number;
+  };
+}
+
+interface SerpApiAuthorProfileResponse {
+  author?: {
+    name?: string;
+    affiliations?: string;
+    email?: string;
+    website?: string;
+    interests?: Array<{
+      title?: string;
+    }>;
+  };
+
+  cited_by?: {
+    table?: Array<{
+      citations?: {
+        all?: number;
+        since_2021?: number;
+      };
+
+      h_index?: {
+        all?: number;
+        since_2021?: number;
+      };
+
+      i10_index?: {
+        all?: number;
+        since_2021?: number;
+      };
+    }>;
+
+    graph?: Array<{
+      year?: number;
+      citations?: number;
+    }>;
+  };
+
+  articles?: SerpApiAuthorProfileArticle[];
+
+  error?: string;
 }
 
 interface SerpApiResponse {
@@ -266,6 +319,222 @@ export function createSerpApiGoogleScholarProvider(
     SerpApiFetch = fetch,
 ): GoogleScholarProvider {
   return {
+    async getAuthorProfile(
+      authorId,
+    ): Promise<GoogleScholarAuthorProfile | null> {
+      const apiKey =
+        process.env.SERPAPI_API_KEY;
+
+      if (!apiKey) {
+        return null;
+      }
+
+      const safeAuthorId =
+        authorId.trim();
+
+      if (!safeAuthorId) {
+        return null;
+      }
+
+      const params =
+        new URLSearchParams();
+
+      params.set(
+        "engine",
+        "google_scholar_author",
+      );
+
+      params.set(
+        "author_id",
+        safeAuthorId,
+      );
+
+      params.set(
+        "hl",
+        "en",
+      );
+
+      params.set(
+        "num",
+        "20",
+      );
+
+      params.set(
+        "api_key",
+        apiKey,
+      );
+
+      params.set(
+        "output",
+        "json",
+      );
+
+      const response =
+        await fetchImpl(
+          `${SERPAPI_BASE_URL}?${params.toString()}`,
+          {
+            method:
+              "GET",
+
+            headers: {
+              Accept:
+                "application/json",
+            },
+
+            cache:
+              "no-store",
+          },
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          `SerpApi Google Scholar author request failed with HTTP ${response.status}.`,
+        );
+      }
+
+      const body =
+        (await response.json()) as
+          SerpApiAuthorProfileResponse;
+
+      if (body.error) {
+        throw new Error(
+          `SerpApi Google Scholar author error: ${body.error}`,
+        );
+      }
+
+      const name =
+        body.author?.name?.trim();
+
+      if (!name) {
+        return null;
+      }
+
+      const table =
+        body.cited_by?.table ?? [];
+
+      const citationStats =
+        table.find(
+          (item) =>
+            item.citations !==
+            undefined,
+        )?.citations;
+
+      const hIndex =
+        table.find(
+          (item) =>
+            item.h_index !==
+            undefined,
+        )?.h_index;
+
+      const i10Index =
+        table.find(
+          (item) =>
+            item.i10_index !==
+            undefined,
+        )?.i10_index;
+
+      return {
+        authorId:
+          safeAuthorId,
+
+        name,
+
+        profileUrl:
+          `https://scholar.google.com/citations?user=${encodeURIComponent(safeAuthorId)}&hl=en`,
+
+        affiliation:
+          body.author?.affiliations,
+
+        researchInterests:
+          (
+            body.author?.interests ??
+            []
+          )
+            .map(
+              (interest) =>
+                interest.title?.trim(),
+            )
+            .filter(
+              (
+                interest,
+              ): interest is string =>
+                Boolean(interest),
+            ),
+
+        citationCount:
+          citationStats?.all,
+
+        citationsSince2021:
+          citationStats?.since_2021,
+
+        hIndex:
+          hIndex?.all,
+
+        hIndexSince2021:
+          hIndex?.since_2021,
+
+        i10Index:
+          i10Index?.all,
+
+        i10IndexSince2021:
+          i10Index?.since_2021,
+
+        website:
+          body.author?.website,
+
+        citationHistory:
+          (
+            body.cited_by?.graph ??
+            []
+          )
+            .filter(
+              (
+                item,
+              ): item is {
+                year: number;
+                citations: number;
+              } =>
+                item.year !== undefined &&
+                item.citations !== undefined,
+            ),
+
+        articles:
+          (
+            body.articles ??
+            []
+          ).map(
+            (article) => ({
+              title:
+                article.title ??
+                "",
+
+              url:
+                article.link,
+
+              citationId:
+                article.citation_id,
+
+              authors:
+                article.authors,
+
+              publication:
+                article.publication,
+
+              year:
+                article.year !==
+                undefined
+                  ? Number(
+                      article.year,
+                    )
+                  : undefined,
+
+              citationCount:
+                article.cited_by?.value,
+            }),
+          ),
+      };
+    },
+
     async search(
       query,
       page,
