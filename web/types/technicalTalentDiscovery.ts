@@ -65,6 +65,7 @@ export type DiscoverySource =
   | "DBLP"
   | "arXiv"
   | "Semantic Scholar"
+  | "OpenAlex"
   | "Papers with Code"
   | "IEEE"
   | "Conference Proceedings"
@@ -176,6 +177,19 @@ export interface DiscoveryEvidence {
    * Optional recruiter-facing explanation.
    */
   relevance?: string;
+
+  /**
+   * Describes how this evidence relates to candidate discovery.
+   *
+   * "Discovery" means this evidence directly contributed to
+   * finding the candidate for the current query.
+   *
+   * "Profile" means this evidence enriches the candidate's
+   * broader technical or research history.
+   */
+  evidenceRole?:
+    | "Discovery"
+    | "Profile";
 }
 
 /**
@@ -599,6 +613,10 @@ export interface TechnicalTalentDiscoveryQuery {
   technologies?: string[];
 
   researchAreas?: string[];
+
+  repositories?: string[];
+
+  publications?: string[];
 
   companies?: string[];
 

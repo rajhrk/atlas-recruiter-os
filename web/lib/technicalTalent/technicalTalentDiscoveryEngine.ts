@@ -571,6 +571,12 @@ function buildGraphQuery(
     researchAreas:
       query.researchAreas,
 
+    repositories:
+      query.repositories,
+
+    publications:
+      query.publications,
+
     conferences:
       query.conferences,
   };

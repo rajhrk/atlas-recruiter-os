@@ -1090,6 +1090,12 @@ const evidence =
     researchAreas:
       query.researchAreas,
 
+    repositories:
+      query.repositories,
+
+    publications:
+      query.publications,
+
     conferences:
       query.conferences,
   };
@@ -1138,6 +1144,8 @@ const evidence =
       ...(query.skills ?? []),
       ...(query.technologies ?? []),
       ...(query.researchAreas ?? []),
+      ...(query.repositories ?? []),
+      ...(query.publications ?? []),
       ...(query.conferences ?? []),
     ].length;
 
@@ -1171,7 +1179,7 @@ const evidence =
             ),
 
           graphEvidenceAvailable:
-            true,
+            requestedGraphSignalCount > 0,
 
           graphMatchRequestedSignalCount:
             requestedGraphSignalCount,

@@ -31,6 +31,7 @@ const VALID_SOURCES: DiscoverySource[] = [
   "GitHub",
   "OpenReview",
   "Semantic Scholar",
+  "OpenAlex",
 ];
 
 interface DiscoveryApiRequest {

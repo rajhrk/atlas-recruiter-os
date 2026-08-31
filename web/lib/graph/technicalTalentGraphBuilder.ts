@@ -184,12 +184,16 @@ export function buildTechnicalTalentGraph(
     const nodeId =
       skillNodeId(name);
 
+    const evidenceIds =
+      skill.evidenceIds ?? [];
+
     addNode(
       nodes,
       {
         id: nodeId,
         type: "skill",
         label: name,
+        evidenceIds,
       },
     );
 
@@ -200,6 +204,7 @@ export function buildTechnicalTalentGraph(
         to: nodeId,
         relationship:
           "demonstrates",
+        evidenceIds,
       },
     );
   }
@@ -219,12 +224,16 @@ export function buildTechnicalTalentGraph(
     const nodeId =
       technologyNodeId(name);
 
+    const evidenceIds =
+      technology.evidenceIds ?? [];
+
     addNode(
       nodes,
       {
         id: nodeId,
         type: "technology",
         label: name,
+        evidenceIds,
       },
     );
 
@@ -235,6 +244,7 @@ export function buildTechnicalTalentGraph(
         to: nodeId,
         relationship:
           "uses",
+        evidenceIds,
       },
     );
   }
