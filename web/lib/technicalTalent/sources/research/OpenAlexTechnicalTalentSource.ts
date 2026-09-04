@@ -128,6 +128,14 @@ function buildResearchQuery(
     );
   }
 
+  if (
+    query.technologies?.length
+  ) {
+    parts.push(
+      ...query.technologies,
+    );
+  }
+
   return Array.from(
     new Set(
       parts
@@ -1012,11 +1020,20 @@ export const openAlexTechnicalTalentSource:
         DiscoveryEvidence[] =
         [];
 
+      const authorEntries =
+        Array.from(authors.entries())
+          .sort(
+            (left, right) =>
+              (matchedWorksByAuthor.get(right[0])?.length ?? 0) -
+              (matchedWorksByAuthor.get(left[0])?.length ?? 0),
+          )
+          .slice(0, 50);
+
       for (
         const [
           authorId,
           partialAuthor,
-        ] of authors
+        ] of authorEntries
       ) {
         try {
           const author =

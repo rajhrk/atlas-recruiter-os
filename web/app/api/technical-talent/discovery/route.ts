@@ -41,6 +41,8 @@ interface DiscoveryApiRequest {
   technologies?: string[];
   researchAreas?: string[];
   roleFamilies?: string[];
+  repositories?: string[];
+  publications?: string[];
   minimumFitScore?: number;
   minimumConfidence?: DiscoveryConfidence;
   sources?: DiscoverySource[];
@@ -247,6 +249,16 @@ export async function POST(
         body?.roleFamilies,
       );
 
+    const repositories =
+      cleanStrings(
+        body?.repositories,
+      );
+
+    const publications =
+      cleanStrings(
+        body?.publications,
+      );
+
     const minimumFitScore =
       typeof body?.minimumFitScore === "number" &&
       Number.isFinite(body.minimumFitScore)
@@ -285,6 +297,8 @@ export async function POST(
       technologies,
       researchAreas,
       roleFamilies,
+      repositories,
+      publications,
       minimumFitScore,
       minimumConfidence,
     };
