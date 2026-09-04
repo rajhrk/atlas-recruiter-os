@@ -394,6 +394,15 @@ function createAuthorEvidence(
         .filter(Boolean)
         .join(" "),
 
+    ...(author.orcid
+      ? {
+          id:
+            `openalex:author:${authorId}:orcid:${author.orcid
+              .replace(/^https?:\/\/orcid\.org\//i, "")
+              .trim()}`,
+        }
+      : {}),
+
     confidence:
       author.display_name
         ? "High"
@@ -461,10 +470,7 @@ function createCitationEvidence(
     confidence:
       "High",
 
-    supports:
-      [
-        "Research impact",
-      ],
+    supports: [],
 
     relevance:
       "OpenAlex citation count is a research-activity signal, not an identity-verification signal.",

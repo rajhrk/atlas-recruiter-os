@@ -46,6 +46,11 @@ interface DiscoveryApiRequest {
   sources?: DiscoverySource[];
   limit?: number;
   offset?: number;
+
+  /**
+   * Opt into evidence-first source planning and execution.
+   */
+  evidenceFirst?: boolean;
 }
 
 function cleanStrings(
@@ -269,6 +274,9 @@ export async function POST(
         body?.offset,
       );
 
+      const evidenceFirst =
+        body?.evidenceFirst === true;
+
     const query:
       TechnicalTalentDiscoveryQuery = {
       keywords,
@@ -290,6 +298,7 @@ export async function POST(
           sources,
           limit,
           offset,
+          evidenceFirst,
         },
       );
 

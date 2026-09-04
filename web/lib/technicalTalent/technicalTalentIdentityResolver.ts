@@ -499,12 +499,16 @@ function getPersonLevelSourceIdentity(
    * Only source identifiers that represent a person/account
    * may be used as automatic identity evidence.
    *
+   * OpenAlex author IDs and GitHub account IDs are
+   * person-level identities.
+   *
    * OpenReview note IDs and Semantic Scholar paper IDs are
    * publication-level identifiers and must not identify a
    * person because co-authors share the same publication ID.
    */
   if (
-    record.id.startsWith("github:")
+    record.id.startsWith("github:") ||
+    record.id.startsWith("openalex:")
   ) {
     return normalizeCompact(
       record.id,
@@ -512,6 +516,143 @@ function getPersonLevelSourceIdentity(
   }
 
   return undefined;
+}
+
+function getPersonLevelSourceIdentities(
+  record: TechnicalTalentDiscoveryRecord,
+): string[] {
+  const ids = [
+    record.id,
+    ...(record.sourceRecordIds ?? []),
+  ];
+
+  return Array.from(
+    new Set(
+      ids
+        .filter(
+          (id) =>
+            id.startsWith("github:") ||
+            id.startsWith("openalex:"),
+        )
+        .map(normalizeCompact),
+    ),
+  );
+}
+
+function getPersonLevelSourceIdentitiesBySource(
+  record: TechnicalTalentDiscoveryRecord,
+): Map<string, string[]> {
+  const result = new Map<string, string[]>();
+
+  for (
+    const identity of getPersonLevelSourceIdentities(record)
+  ) {
+    const source =
+      identity.startsWith("github:")
+        ? "github"
+        : identity.startsWith("openalex:")
+          ? "openalex"
+          : undefined;
+
+    if (!source) continue;
+
+    const existing =
+      result.get(source) ?? [];
+
+    existing.push(identity);
+    result.set(source, existing);
+  }
+
+  return result;
+}
+
+function hasConflictingPersonLevelSourceIdentities(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+): boolean {
+  const leftBySource =
+    getPersonLevelSourceIdentitiesBySource(left);
+
+  const rightBySource =
+    getPersonLevelSourceIdentitiesBySource(right);
+
+  for (
+    const [source, leftIdentities] of leftBySource
+  ) {
+    const rightIdentities =
+      rightBySource.get(source);
+
+    if (!rightIdentities) continue;
+
+    /*
+     * Same-source person-level identities are authoritative
+     * identity boundaries.
+     *
+     * A partial overlap is still a conflict:
+     *
+     *   left  = {openalex:A, openalex:B}
+     *   right = {openalex:A, openalex:C}
+     *
+     * The shared A does not make B and C the same person.
+     *
+     * A legitimate multi-ID cluster is allowed separately
+     * by the shared explicit ORCID check in the resolver,
+     * which runs before this function.
+     */
+    const allIdentities =
+      new Set([
+        ...leftIdentities,
+        ...rightIdentities,
+      ]);
+
+    const overlap =
+      arraysOverlap(
+        leftIdentities,
+        rightIdentities,
+      );
+
+    if (
+      overlap.length === 0 ||
+      allIdentities.size !== overlap.length
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function getPersonLevelSource(
+  record: TechnicalTalentDiscoveryRecord,
+): string | undefined {
+  const identity =
+    getPersonLevelSourceIdentity(
+      record,
+    );
+
+  if (!identity) {
+    return undefined;
+  }
+
+  if (identity.startsWith("github:")) {
+    return "github";
+  }
+
+  if (identity.startsWith("openalex:")) {
+    return "openalex";
+  }
+
+  return undefined;
+}
+
+function hasConflictingSameSourceIdentity(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+): boolean {
+  return hasConflictingPersonLevelSourceIdentities(
+    left,
+    right,
+  );
 }
 
 function buildIdentityKey(
@@ -567,6 +708,100 @@ function getGitHubProfileUrls(
       normalizeUrl,
     )
     .filter(Boolean);
+}
+
+function getOrcidIds(
+  record: TechnicalTalentDiscoveryRecord,
+): string[] {
+  return record.evidence
+    .map((evidence) => {
+      const match =
+        evidence.id.match(
+          /(?:^|:)orcid:(.+)$/i,
+        );
+
+      return match?.[1];
+    })
+    .filter(
+      (
+        value,
+      ): value is string =>
+        Boolean(value),
+    )
+    .map(normalizeCompact)
+    .filter(Boolean);
+}
+
+function hasOrcidIdentityConflict(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+): boolean {
+  const leftOrcids = getOrcidIds(left);
+  const rightOrcids = getOrcidIds(right);
+
+  /*
+   * If both records have explicit ORCID identities and
+   * none of those identities overlap, they represent
+   * conflicting person-level identity evidence.
+   *
+   * This is a hard boundary:
+   * name, skills, publications, domain, role, etc.
+   * must not override an explicit ORCID conflict.
+   */
+  if (
+    leftOrcids.length === 0 ||
+    rightOrcids.length === 0
+  ) {
+    return false;
+  }
+
+  return arraysOverlap(
+    leftOrcids,
+    rightOrcids,
+  ).length === 0;
+}
+
+function scoreOrcidIdentity(
+  left: TechnicalTalentDiscoveryRecord,
+  right: TechnicalTalentDiscoveryRecord,
+  reasons: DiscoveryMatchReason[],
+): number {
+  const leftOrcids =
+    getOrcidIds(left);
+
+  const rightOrcids =
+    getOrcidIds(right);
+
+  if (
+    leftOrcids.length === 0 ||
+    rightOrcids.length === 0
+  ) {
+    return 0;
+  }
+
+  const overlap =
+    arraysOverlap(
+      leftOrcids,
+      rightOrcids,
+    );
+
+  if (overlap.length === 0) {
+    return 0;
+  }
+
+  addReason(
+    reasons,
+    {
+      category: "Other",
+      signal: "Shared ORCID identity",
+      weight: 60,
+      explanation:
+        "Both records contain the same normalized ORCID, providing strong person-level identity corroboration.",
+      evidenceIds: [],
+    },
+  );
+
+  return 60;
 }
 
 function scoreGitHubProfileIdentity(
@@ -1610,10 +1845,137 @@ export function resolveTechnicalTalentIdentity(
   const reasons: DiscoveryMatchReason[] =
     [];
 
+  /*
+   * Explicit ORCID conflict is the strongest identity
+   * boundary available to the resolver.
+   *
+   * If both records expose ORCID identities and there is
+   * no overlap, do not allow weaker signals to override it.
+   */
+  if (
+    hasOrcidIdentityConflict(
+      left,
+      right,
+    )
+  ) {
+    return {
+      leftIdentityKey:
+        buildIdentityKey(
+          left,
+        ),
+
+      rightIdentityKey:
+        buildIdentityKey(
+          right,
+        ),
+
+      score: 0,
+
+      confidence:
+        confidenceFromScore(
+          0,
+        ),
+
+      shouldMerge: false,
+
+      requiresReview: false,
+
+      reasons: [
+        {
+          category: "Other",
+          signal: "Conflicting ORCID identities",
+          weight: 0,
+          explanation:
+            "Both records contain explicit ORCID identities, but none overlap. ORCID conflict is treated as a hard person-level identity boundary.",
+          evidenceIds: [],
+        },
+      ],
+    };
+  }
+
+  /*
+   * A shared explicit ORCID is allowed to bridge otherwise
+   * different person-level identifiers from the same source.
+   *
+   * Example:
+   *   OpenAlex A123 + OpenAlex A456
+   *   with the same ORCID
+   *
+   * This is an explicit identity bridge, so it is stronger
+   * than the same-source identifier boundary.
+   *
+   * Without a shared ORCID, different person-level
+   * identities from the same authoritative source remain
+   * a hard boundary.
+   */
+  const leftOrcids =
+    getOrcidIds(left);
+
+  const rightOrcids =
+    getOrcidIds(right);
+
+  const hasSharedOrcid =
+    leftOrcids.length > 0 &&
+    rightOrcids.length > 0 &&
+    arraysOverlap(
+      leftOrcids,
+      rightOrcids,
+    ).length > 0;
+
+  if (
+    !hasSharedOrcid &&
+    hasConflictingSameSourceIdentity(
+      left,
+      right,
+    )
+  ) {
+    return {
+      leftIdentityKey:
+        buildIdentityKey(
+          left,
+        ),
+
+      rightIdentityKey:
+        buildIdentityKey(
+          right,
+        ),
+
+      score: 0,
+
+      confidence:
+        confidenceFromScore(
+          0,
+        ),
+
+      shouldMerge: false,
+
+      requiresReview: false,
+
+      reasons: [
+        {
+          category: "Other",
+          signal:
+            "Conflicting same-source person identities",
+          weight: 0,
+          explanation:
+            "The records contain different person-level identities from the same authoritative source. Same-source identity conflicts are treated as a hard person-level boundary unless an explicit shared ORCID provides an identity bridge.",
+          evidenceIds: [],
+        },
+      ],
+    };
+  }
+
   let score = 0;
 
   score +=
     scoreSourceIdentity(
+      left,
+      right,
+      reasons,
+    );
+
+  score +=
+    scoreOrcidIdentity(
       left,
       right,
       reasons,
@@ -1786,12 +2148,14 @@ export function resolveTechnicalTalentIdentity(
 
   const identitySignals = new Set([
     "Shared external source identity",
+    "Shared ORCID identity",
     "Shared GitHub profile identity",
     "Shared personal website identity",
     "Shared external URL",
     "OpenReview author identity corroboration",
     "Exact normalized name match",
     "Strong partial name match",
+    "Shared organization affiliation",
     "Shared publication",
     "Shared coauthor network",
   ]);
@@ -1813,6 +2177,7 @@ export function resolveTechnicalTalentIdentity(
 
   const hasStrongIdentityEvidence =
     hasSourceIdentity ||
+    hasSharedOrcid ||
     hasSharedGitHubProfile ||
     hasSharedPersonalWebsite ||
     hasSharedUrl ||
@@ -1850,13 +2215,29 @@ export function resolveTechnicalTalentIdentity(
       mergeThreshold &&
     strongEvidence;
 
+  const hasSameNameAndOrganization =
+    namesMatch(
+      left,
+      right,
+    ) &&
+    reasons.some(
+      (reason) =>
+        reason.signal ===
+        "Shared organization affiliation",
+    );
+
   const requiresReview =
     !shouldMerge &&
-    normalizedScore >=
-      reviewThreshold &&
     (
-      hasStrongIdentityEvidence ||
-      hasModerateIdentityEvidence
+      (
+        normalizedScore >=
+          reviewThreshold &&
+        (
+          hasStrongIdentityEvidence ||
+          hasModerateIdentityEvidence
+        )
+      ) ||
+      hasSameNameAndOrganization
     );
 
   return {

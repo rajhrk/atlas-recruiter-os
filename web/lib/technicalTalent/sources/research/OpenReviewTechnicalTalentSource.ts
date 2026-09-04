@@ -523,7 +523,6 @@ function createEvidence(
     confidence,
 
     supports: [
-      "Research Activity",
       ...(venue
         ? [venue]
         : []),

@@ -678,7 +678,6 @@ function createEvidence(
       `Public arXiv publication authored by ${author.name}.`,
     confidence,
     supports: [
-      "Research Activity",
       ...paper.categories,
     ],
     relevance:
