@@ -479,6 +479,90 @@ runTest(
 );
 
 /**
+ * Same-source GitHub identities must remain
+ * separate without an explicit identity bridge.
+ *
+ * This protects against common-name, affiliation,
+ * and technical-signal collisions between distinct
+ * GitHub accounts.
+ */
+const githubPersonOne =
+  candidate({
+    id:
+      "github:alex-researcher-one",
+
+    name:
+      "Alex Researcher",
+
+    primaryDomain:
+      "AI / ML",
+
+    sourceRecordIds: [
+      "github:user:alex-researcher-one",
+    ],
+
+    affiliations: [
+      {
+        organization:
+          "Example AI Lab",
+
+        current:
+          true,
+      },
+    ],
+
+    technologies: [
+      {
+        name:
+          "PyTorch",
+      },
+    ],
+  });
+
+const githubPersonTwo =
+  candidate({
+    id:
+      "github:alex-researcher-two",
+
+    name:
+      "Alex Researcher",
+
+    primaryDomain:
+      "AI / ML",
+
+    sourceRecordIds: [
+      "github:user:alex-researcher-two",
+    ],
+
+    affiliations: [
+      {
+        organization:
+          "Example AI Lab",
+
+        current:
+          true,
+      },
+    ],
+
+    technologies: [
+      {
+        name:
+          "PyTorch",
+      },
+    ],
+  });
+
+runTest(
+  "TWO DIFFERENT GITHUB ACCOUNTS — SAME NAME",
+  githubPersonOne,
+  githubPersonTwo,
+  {
+    shouldMerge:
+      false,
+  },
+);
+
+/**
  * 5. Same publication alone must not
  * establish identity.
  */

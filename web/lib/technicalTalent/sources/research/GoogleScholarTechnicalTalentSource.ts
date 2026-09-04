@@ -820,9 +820,10 @@ async function enrichGoogleScholarCandidate(
           new Date().toISOString(),
       };
 
-      record.evidence.push(
+      record.evidence = [
+        ...(record.evidence ?? []),
         evidence,
-      );
+      ];
 
       record.sourcingSignals =
         [

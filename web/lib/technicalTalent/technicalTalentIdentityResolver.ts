@@ -534,7 +534,16 @@ function getPersonLevelSourceIdentities(
             id.startsWith("github:") ||
             id.startsWith("openalex:"),
         )
-        .map(normalizeCompact),
+        .map((id) => {
+          const source =
+            id.startsWith("github:")
+              ? "github"
+              : "openalex";
+
+          return `${source}:${normalizeCompact(
+            id.slice(source.length + 1),
+          )}`;
+        }),
     ),
   );
 }
