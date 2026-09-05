@@ -99,6 +99,89 @@ async function main(): Promise<void> {
         warnings: [],
       };
     },
+
+    async getAuthorProfile(
+      authorId,
+    ) {
+      if (
+        authorId === "author-123"
+      ) {
+        return {
+          authorId:
+            "author-123",
+
+          name:
+            "Dr. Example Researcher",
+
+          profileUrl:
+            "https://scholar.google.com/citations?user=author-123",
+
+          affiliation:
+            "Example Robotics Lab",
+
+          researchInterests: [
+            "Robotics",
+            "Robot Learning",
+          ],
+
+          citationCount:
+            420,
+
+          citationsSince2021:
+            180,
+
+          hIndex:
+            12,
+
+          hIndexSince2021:
+            8,
+
+          i10Index:
+            15,
+
+          i10IndexSince2021:
+            10,
+
+          citationHistory: [
+            {
+              year:
+                2025,
+
+              citations:
+                75,
+            },
+            {
+              year:
+                2026,
+
+              citations:
+                105,
+            },
+          ],
+
+          articles: [
+            {
+              title:
+                "Learning Efficient Robot Policies",
+
+              url:
+                "https://scholar.google.com/example-profile-paper",
+
+              year:
+                2025,
+
+              citationCount:
+                27,
+            },
+          ],
+
+          email:
+            "researcher@example.edu",
+        };
+      }
+
+      return null;
+    },
   };
 
   const source =
@@ -322,12 +405,158 @@ async function main(): Promise<void> {
 
   /*
    * ------------------------------------------------------------
+   * AUTHOR ENRICHMENT
+   * ------------------------------------------------------------
+   */
+
+  assert(
+    record?.researchAreas?.some(
+      (area) =>
+        area ===
+        "Robotics",
+    ) === true,
+    "Author research interest is added as a research area",
+  );
+
+  assert(
+    record?.skills.some(
+      (skill) =>
+        skill.name ===
+          "Robotics" &&
+        skill.normalizedName ===
+          "robotics",
+    ) === true,
+    "Author research interest becomes a normalized skill",
+  );
+
+  assert(
+    record?.skills.some(
+      (skill) =>
+        skill.name ===
+          "Robot Learning" &&
+        skill.normalizedName ===
+          "robot learning",
+    ) === true,
+    "Enriched research interest preserves normalized skill",
+  );
+
+  assert(
+    record?.evidence.some(
+      (item) =>
+        item.title ===
+        "Google Scholar citations",
+    ) === true,
+    "Scholar citation metric creates evidence",
+  );
+
+  assert(
+    record?.evidence.some(
+      (item) =>
+        item.title ===
+        "Google Scholar h-index",
+    ) === true,
+    "Scholar h-index creates evidence",
+  );
+
+  assert(
+    record?.evidence.some(
+      (item) =>
+        item.title ===
+        "Google Scholar i10-index",
+    ) === true,
+    "Scholar i10-index creates evidence",
+  );
+
+  assert(
+    record?.evidence.some(
+      (item) =>
+        item.title ===
+        "Google Scholar citations since 2021",
+    ) === true,
+    "Recent Scholar citation metric creates evidence",
+  );
+
+  assert(
+    record?.sourcingSignals?.some(
+      (signal) =>
+        signal.type ===
+          "Research Activity" &&
+        signal.signal.includes(
+          "Google Scholar h-index: 12",
+        ),
+    ) === true,
+    "Scholar h-index creates research-activity signal",
+  );
+
+  assert(
+    record?.sourcingSignals?.some(
+      (signal) =>
+        signal.type ===
+          "Research Activity" &&
+        signal.signal.includes(
+          "Google Scholar i10-index: 15",
+        ),
+    ) === true,
+    "Scholar i10-index creates research-activity signal",
+  );
+
+  assert(
+    record?.publications?.some(
+      (publication) =>
+        publication.title ===
+        "Learning Efficient Robot Policies",
+    ) === true,
+    "Author-profile publication is added to candidate",
+  );
+
+  assert(
+    record?.publications?.some(
+      (publication) =>
+        publication.title ===
+          "Learning Efficient Robot Policies" &&
+        publication.citationCount ===
+          27 &&
+        publication.year ===
+          2025,
+    ) === true,
+    "Enriched publication metadata is preserved",
+  );
+
+  assert(
+    record?.evidence.some(
+      (item) =>
+        item.source ===
+          "Google Scholar" &&
+        item.url?.includes(
+          "scholar.google.com",
+        ),
+    ) === true,
+    "Author enrichment evidence references Scholar",
+  );
+
+  assert(
+    record?.sourceRecordIds?.includes(
+      "author-123",
+    ) === true,
+    "Scholar author ID is preserved as a source record ID",
+  );
+
+  assert(
+    !Object.prototype.hasOwnProperty.call(
+      record ?? {},
+      "email",
+    ),
+    "Scholar verified email is not imported into candidate",
+  );
+
+  /*
+   * ------------------------------------------------------------
    * PUBLICATION
    * ------------------------------------------------------------
    */
 
   assert(
-    record?.publications?.length === 1,
+    (record?.publications?.length ?? 0) >= 1,
     "Publication is attached to candidate",
   );
 

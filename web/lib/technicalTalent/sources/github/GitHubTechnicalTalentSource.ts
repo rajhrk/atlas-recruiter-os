@@ -37,6 +37,16 @@ const DEFAULT_PER_PAGE = 10;
 
 const MAX_PER_PAGE = 30;
 
+/**
+ * Evidence-first GitHub discovery limits.
+ *
+ * Repository search is intentionally bounded because contributor
+ * discovery multiplies GitHub API requests.
+ */
+const EVIDENCE_FIRST_MAX_REPOSITORIES = 5;
+
+const EVIDENCE_FIRST_MAX_CONTRIBUTORS_PER_REPOSITORY = 10;
+
 const GITHUB_SOURCE_CAPABILITIES: TechnicalTalentSourceCapabilities = {
   identity: true,
   technicalProfile: true,
@@ -112,6 +122,24 @@ interface GitHubRepositorySearchResponse {
 }
 
 /**
+ * Minimal GitHub contributor representation.
+ *
+ * Contributors are only promoted to candidate identities when
+ * GitHub explicitly identifies them as human users.
+ */
+interface GitHubContributor {
+  login: string;
+
+  id: number;
+
+  html_url: string;
+
+  contributions: number;
+
+  type: string;
+}
+
+/**
  * GitHub public user profile.
  *
  * This is person-level identity evidence and is distinct
@@ -170,47 +198,78 @@ interface GitHubApiError {
 function buildRepositorySearchQuery(
   query: TechnicalTalentDiscoveryQuery,
 ): string {
-  const parts: string[] = [];
+  const terms: string[] = [];
 
-  for (const keyword of query.keywords ?? []) {
-    const value =
-      keyword.trim();
+  const addTerms = (
+    values: string[] | undefined,
+  ) => {
+    for (const value of values ?? []) {
+      const normalized =
+        value.trim();
 
-    if (value) {
-      parts.push(
-        `"${value}"`,
-      );
+      if (
+        normalized &&
+        !terms.some(
+          (existing) =>
+            existing.toLowerCase() ===
+            normalized.toLowerCase(),
+        )
+      ) {
+        terms.push(normalized);
+      }
     }
+  };
+
+  /**
+   * Technical evidence is more useful to GitHub repository
+   * search than recruiter-oriented role labels.
+   */
+  addTerms(
+    query.keywords,
+  );
+
+  addTerms(
+    query.technologies,
+  );
+
+  addTerms(
+    query.skills,
+  );
+
+  addTerms(
+    query.researchAreas,
+  );
+
+  if (
+    terms.length === 0
+  ) {
+    addTerms(
+      query.roleFamilies,
+    );
   }
 
   if (
+    terms.length === 0 &&
     query.domains &&
     query.domains.length > 0
   ) {
-    const domainTerms =
-      query.domains
-        .map((domain) =>
-          domain.trim(),
-        )
-        .filter(Boolean);
-
-    if (domainTerms.length > 0) {
-      parts.push(
-        domainTerms
-          .map(
-            (domain) =>
-              `"${domain}"`,
-          )
-          .join(" OR "),
-      );
-    }
+    addTerms(
+      query.domains,
+    );
   }
 
-  if (parts.length === 0) {
+  if (
+    terms.length === 0
+  ) {
     return "language:C++";
   }
 
-  return parts.join(" ");
+  return terms
+    .map(
+      (term) =>
+        `"${term.replace(/"/g, '\\"')}"`,
+    )
+    .join(" OR ");
 }
 
 /**
@@ -281,6 +340,46 @@ async function githubFetch<T>(
  * and affiliation signals that repository search alone
  * cannot establish.
  */
+async function fetchGitHubContributors(
+  owner: string,
+  repository: string,
+): Promise<GitHubContributor[]> {
+  const url =
+    `${GITHUB_API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/contributors?per_page=${EVIDENCE_FIRST_MAX_CONTRIBUTORS_PER_REPOSITORY}`;
+
+  const contributors =
+    await githubFetch<GitHubContributor[]>(
+      url,
+    );
+
+  return contributors
+    .filter((contributor) => contributor.type === "User")
+    .filter((contributor) => contributor.contributions > 0)
+    .filter((contributor) => {
+      const login = contributor.login.trim().toLowerCase();
+
+      if (!login) return false;
+
+      const knownAutomationLogins = new Set([
+        "dependabot",
+        "github-actions",
+        "renovate",
+        "semantic-release",
+        "codecov",
+        "greenkeeper",
+      ]);
+
+      if (knownAutomationLogins.has(login)) return false;
+      if (login.endsWith("[bot]")) return false;
+
+      return true;
+    })
+    .slice(
+      0,
+      EVIDENCE_FIRST_MAX_CONTRIBUTORS_PER_REPOSITORY,
+    );
+}
+
 async function fetchGitHubUserProfile(
   login: string,
 ): Promise<GitHubUserProfile> {
@@ -475,6 +574,369 @@ function inferRepositoryDomain(
   };
 }
 
+function normalizeGitHubTechnicalSignal(
+  value: string,
+): string {
+  const normalized = value.trim().toLowerCase();
+
+  const canonicalNames: Record<string, string> = {
+    pytorch: "PyTorch",
+    tensorflow: "TensorFlow",
+    keras: "Keras",
+    "scikit-learn": "scikit-learn",
+    sklearn: "scikit-learn",
+    "c++": "C++",
+    cpp: "C++",
+    "c#": "C#",
+    csharp: "C#",
+    python: "Python",
+    javascript: "JavaScript",
+    typescript: "TypeScript",
+    java: "Java",
+    golang: "Go",
+    go: "Go",
+    rust: "Rust",
+    kotlin: "Kotlin",
+    swift: "Swift",
+  };
+
+  return canonicalNames[normalized] ?? value.trim();
+}
+
+function getRepositoryTechnicalSignals(
+  repository: GitHubRepository,
+): string[] {
+  return Array.from(
+    new Set(
+      [
+        repository.language,
+        ...(repository.topics ?? []),
+      ]
+        .filter(
+          (
+            value,
+          ): value is string =>
+            Boolean(value?.trim()),
+        )
+        .map(normalizeGitHubTechnicalSignal),
+    ),
+  );
+}
+
+function contributorToRecord(
+  contributor: GitHubContributor,
+  repository: GitHubRepository,
+  profile?: GitHubUserProfile,
+): TechnicalTalentDiscoveryRecord {
+  const technicalSignals =
+    getRepositoryTechnicalSignals(repository);
+
+  const technologies =
+    technicalSignals.map(
+      (name) => ({
+        name,
+      }),
+    );
+
+  const repositoryEvidenceId =
+    `github-repository-contribution:${repository.id}:${contributor.id}`;
+
+  const repositoryEvidence: DiscoveryEvidence = {
+    id:
+      repositoryEvidenceId,
+
+    type:
+      "Repository",
+
+    source:
+      GITHUB_SOURCE,
+
+    title:
+      repository.name,
+
+    url:
+      repository.html_url,
+
+    organization:
+      repository.owner.type ===
+      "Organization"
+        ? repository.owner.login
+        : undefined,
+
+    description:
+      repository.description ??
+      undefined,
+
+    confidence:
+      contributor.contributions >=
+      50
+        ? "High"
+        : contributor.contributions >=
+            10
+          ? "Medium"
+          : "Low",
+
+    supports: technicalSignals,
+
+    relevance:
+      `GitHub contributor ${contributor.login} has ${contributor.contributions} recorded contributions to "${repository.full_name}".`,
+  };
+
+  const evidence: DiscoveryEvidence[] = [
+    repositoryEvidence,
+  ];
+
+  if (profile) {
+    evidence.push({
+      id:
+        `github-profile:${profile.id}`,
+
+      type:
+        "Technical Profile",
+
+      source:
+        GITHUB_SOURCE,
+
+      title:
+        `GitHub profile: ${profile.login}`,
+
+      url:
+        profile.html_url,
+
+      organization:
+        profile.company ??
+        undefined,
+
+      description:
+        [
+          profile.bio ?? "",
+          profile.location
+            ? `Location: ${profile.location}`
+            : "",
+          profile.public_repos !== undefined
+            ? `Public repositories: ${profile.public_repos}`
+            : "",
+          profile.followers !== undefined
+            ? `Followers: ${profile.followers}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+
+      confidence:
+        "High",
+
+      supports: [
+        ...(profile.company
+          ? [profile.company]
+          : []),
+        ...(profile.location
+          ? [profile.location]
+          : []),
+      ],
+
+      relevance:
+        `Public GitHub user profile for ${profile.login}.`,
+    });
+  }
+
+  const affiliations =
+    profile?.company
+      ? [
+          {
+            organization:
+              profile.company,
+
+            current:
+              undefined,
+
+            location:
+              profile.location ??
+              undefined,
+
+            evidenceIds: [
+              `github-profile:${profile.id}`,
+            ],
+          },
+        ]
+      : [];
+
+  const name =
+    profile?.name?.trim() ||
+    contributor.login;
+
+  const headline =
+    profile?.bio?.trim() ||
+    `GitHub contributor to ${repository.name}`;
+
+  return {
+    id:
+      `github:${contributor.id}`,
+
+    name,
+
+    firstName:
+      profile?.name
+        ?.trim()
+        ?.split(/\s+/)[0] ||
+      undefined,
+
+    headline,
+
+    location:
+      profile?.location ??
+      undefined,
+
+    primaryDomain:
+      inferRepositoryDomain(
+        repository,
+      ).primaryDomain,
+
+    secondaryDomains:
+      inferRepositoryDomain(
+        repository,
+      ).secondaryDomains,
+
+    normalizedRole:
+      "Technical Contributor",
+
+    roleFamily:
+      "Software Engineering",
+
+    talentType:
+      "Software Engineer" as DiscoveryTalentType,
+
+    skills: [],
+
+    technologies,
+
+    affiliations,
+
+    publications: [],
+
+    patents: [],
+
+    repositories: [
+      {
+        repository:
+          repository.html_url,
+
+        description:
+          repository.description ??
+          undefined,
+
+        url:
+          repository.html_url,
+
+        owner:
+          repository.owner.login,
+
+        languages:
+          repository.language
+            ? [repository.language]
+            : undefined,
+
+        technologies:
+          technicalSignals.filter(
+            (signal) =>
+              signal !==
+              normalizeGitHubTechnicalSignal(
+                repository.language ?? "",
+              ),
+          ),
+
+        stars:
+          repository.stargazers_count,
+      },
+    ],
+
+    conferences: [],
+
+    researchAreas: [],
+
+    recruiterNotes: [
+      "Discovered through GitHub contributor evidence.",
+      `Contributor to ${repository.full_name} with ${contributor.contributions} recorded contributions.`,
+      profile
+        ? "GitHub public profile enrichment is available as person-level identity evidence."
+        : "GitHub profile enrichment was unavailable; identity should be corroborated using additional sources.",
+    ],
+
+    sourcingSignals: [
+      {
+        type:
+          "Open Source",
+
+        signal:
+          "GitHub repository contribution",
+
+        strength:
+          contributor.contributions >=
+          50
+            ? "High"
+            : contributor.contributions >=
+                10
+              ? "Medium"
+              : "Low",
+
+        evidenceIds: [
+          repositoryEvidenceId,
+        ],
+
+        explanation:
+          `Public GitHub contributor activity on "${repository.full_name}" provides technical and open-source evidence.`,
+      },
+
+      ...(profile
+        ? [
+            {
+              type:
+                "Company Affiliation" as const,
+
+              signal:
+                profile.company
+                  ? `GitHub profile company: ${profile.company}`
+                  : "GitHub public profile identity",
+
+              strength:
+                "High" as const,
+
+              evidenceIds: [
+                `github-profile:${profile.id}`,
+              ],
+
+              explanation:
+                `GitHub public profile provides person-level identity evidence for ${profile.login}.`,
+            },
+          ]
+        : []),
+    ],
+
+    evidence,
+
+    confidence:
+      profile
+        ? "High"
+        : contributor.contributions >=
+            50
+          ? "High"
+          : contributor.contributions >=
+              10
+            ? "Medium"
+            : "Low",
+
+    approvalStatus:
+      "Unreviewed",
+
+    sourceRecordIds: [
+      `github:${contributor.id}`,
+    ],
+
+    firstDiscoveredAt:
+      new Date().toISOString(),
+  };
+}
+
 function repositoryToRecord(
   repository: GitHubRepository,
   profile?: GitHubUserProfile,
@@ -587,7 +1049,6 @@ function repositoryToRecord(
         "High",
 
       supports: [
-        "GitHub Identity",
         ...(profile.company
           ? [profile.company]
           : []),
@@ -623,10 +1084,7 @@ function repositoryToRecord(
         confidence:
           "High",
 
-        supports: [
-          "Personal Website",
-          "Identity Corroboration",
-        ],
+        supports: [],
 
         relevance:
           `The GitHub profile publicly links to this personal website for ${profile.login}.`,
@@ -860,71 +1318,203 @@ export class GitHubTechnicalTalentSource
      * GitHub repository search results can represent either
      * individual developers or organizations.
      *
-     * Only human-owned repositories become candidate
-     * records. Organization-owned repositories remain
-     * source evidence and discovery context, but must not
-     * appear as people in recruiter results.
+     * Evidence-first mode deliberately does not promote
+     * repository owners directly. It discovers people through
+     * contributor activity instead.
      */
-    const candidateRepositories =
-      response.items.filter(
-        (repository) =>
-          repository.owner.type ===
-          "User",
-      );
+    let records: TechnicalTalentDiscoveryRecord[];
 
-    const uniqueOwners =
-      Array.from(
+
+    if (
+      request.evidenceObjectives &&
+      request.evidenceObjectives.length > 0
+    ) {
+      /**
+       * Evidence-first discovery promotes people from the
+       * contributors of relevant repositories rather than
+       * treating the repository owner as the only candidate.
+       *
+       * Only GitHub users returned by the contributor endpoint
+       * are eligible. Organizations and non-user identities
+       * never become candidates.
+       */
+      const repositoriesForContributorDiscovery =
+        response.items.slice(
+          0,
+          EVIDENCE_FIRST_MAX_REPOSITORIES,
+        );
+
+      const contributorResults =
+        await Promise.all(
+          repositoriesForContributorDiscovery.map(
+            async (repository) => {
+              try {
+                const contributors =
+                  await fetchGitHubContributors(
+                    repository.owner.login,
+                    repository.name,
+                  );
+
+                return {
+                  repository,
+                  contributors,
+                };
+              } catch {
+                return {
+                  repository,
+                  contributors: [],
+                };
+              }
+            },
+          ),
+        );
+
+      const contributorById =
+        new Map<
+          number,
+          {
+            contributor: GitHubContributor;
+            repository: GitHubRepository;
+          }
+        >();
+
+      for (
+        const result of
+        contributorResults
+      ) {
+        for (
+          const contributor of
+          result.contributors
+        ) {
+          if (
+            !contributorById.has(
+              contributor.id,
+            )
+          ) {
+            contributorById.set(
+              contributor.id,
+              {
+                contributor,
+                repository:
+                  result.repository,
+              },
+            );
+          }
+        }
+      }
+
+      const contributorEntries =
+        Array.from(
+          contributorById.values(),
+        );
+
+      const contributorProfileResults =
+        await Promise.all(
+          contributorEntries.map(
+            async ({
+              contributor,
+            }) => {
+              try {
+                return [
+                  contributor.id,
+                  await fetchGitHubUserProfile(
+                    contributor.login,
+                  ),
+                ] as const;
+              } catch {
+                return [
+                  contributor.id,
+                  undefined,
+                ] as const;
+              }
+            },
+          ),
+        );
+
+      const contributorProfiles =
         new Map(
-          candidateRepositories.map(
-            (repository) => [
-              repository.owner.login,
-              repository.owner.login,
-            ],
-          ),
-        ).values(),
-      );
+          contributorProfileResults,
+        );
 
-    const profileResults =
-      await Promise.all(
-        uniqueOwners.map(
-          async (login) => {
-            try {
-              return [
-                login,
-                await fetchGitHubUserProfile(
-                  login,
-                ),
-              ] as const;
-            } catch {
-              return [
-                login,
-                undefined,
-              ] as const;
-            }
-          },
-        ),
-      );
-
-    const profiles =
-      new Map(
-        profileResults,
-      );
-
-    const records =
-      candidateRepositories.map(
-        (repository) =>
-          repositoryToRecord(
+      records =
+        contributorEntries.map(
+          ({
+            contributor,
             repository,
-            profiles.get(
-              repository.owner.login,
+          }) =>
+            contributorToRecord(
+              contributor,
+              repository,
+              contributorProfiles.get(
+                contributor.id,
+              ),
             ),
-          ),
-      );
+        );
+    } else {
+      /**
+       * Legacy GitHub discovery remains owner-based.
+       *
+       * Only human-owned repositories become candidate
+       * records. Organization-owned repositories remain
+       * source evidence and discovery context.
+       */
+      const candidateRepositories =
+        response.items.filter(
+          (repository) =>
+            repository.owner.type ===
+            "User",
+        );
 
-    /**
-     * Preserve evidence for every repository returned by
-     * GitHub, including organization-owned repositories.
-     */
+      const uniqueOwners =
+        Array.from(
+          new Map(
+            candidateRepositories.map(
+              (repository) => [
+                repository.owner.login,
+                repository.owner.login,
+              ],
+            ),
+          ).values(),
+        );
+
+      const profileResults =
+        await Promise.all(
+          uniqueOwners.map(
+            async (login) => {
+              try {
+                return [
+                  login,
+                  await fetchGitHubUserProfile(
+                    login,
+                  ),
+                ] as const;
+              } catch {
+                return [
+                  login,
+                  undefined,
+                ] as const;
+              }
+            },
+          ),
+        );
+
+      const profiles =
+        new Map(
+          profileResults,
+        );
+
+      records =
+        candidateRepositories.map(
+          (repository) =>
+            repositoryToRecord(
+              repository,
+              profiles.get(
+                repository.owner.login,
+              ),
+            ),
+        );
+    }
+
     const evidence =
       response.items.map(
         repositoryToEvidence,

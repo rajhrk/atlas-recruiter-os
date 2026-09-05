@@ -1,6 +1,11 @@
+import {
+  assessCrossSourceEvidence,
+} from "./technicalTalentEvidenceVerifier";
+
 import type {
   DiscoveryConfidence,
   DiscoveryEvidence,
+  DiscoveryEvidenceAssessment,
   DiscoveryEvidenceType,
   TechnicalTalentDiscoveryRecord,
   DiscoveryVerification,
@@ -97,6 +102,7 @@ function evidenceForTypes(
 
 function categoryScore(
   evidence: DiscoveryEvidence[],
+  evidenceAssessments: DiscoveryEvidenceAssessment[],
 ): number {
   if (
     evidence.length === 0
@@ -114,11 +120,51 @@ function categoryScore(
       ),
     );
 
+  /*
+   * Corroboration must come from independent sources
+   * supporting the same fact.
+   *
+   * Multiple evidence items from the same source do
+   * not count as independent corroboration.
+   *
+   * 1 source  -> +0
+   * 2 sources -> +5
+   * 3 sources -> +10
+   * 4+ sources -> +15
+   */
+  const categoryEvidenceIds =
+    new Set(
+      evidence.map(
+        (item) => item.id,
+      ),
+    );
+
+  const strongestIndependentSourceCount =
+    evidenceAssessments.reduce(
+      (highestCount, assessment) => {
+        const appliesToCategory =
+          assessment.evidenceIds.some(
+            (id) =>
+              categoryEvidenceIds.has(id),
+          );
+
+        if (!appliesToCategory) {
+          return highestCount;
+        }
+
+        return Math.max(
+          highestCount,
+          assessment.independentSourceCount,
+        );
+      },
+      0,
+    );
+
   const corroborationBonus =
     Math.min(
       15,
       Math.max(
-        evidence.length - 1,
+        strongestIndependentSourceCount - 1,
         0,
       ) *
         5,
@@ -130,7 +176,6 @@ function categoryScore(
       corroborationBonus,
   );
 }
-
 function identityScore(
   evidence: DiscoveryEvidence[],
 ): number {
@@ -326,6 +371,11 @@ export function verifyTechnicalTalentCandidate(
       RESEARCH_TYPES,
     );
 
+  const evidenceAssessments =
+    assessCrossSourceEvidence(
+      evidence,
+    );
+
   const identity =
     identityScore(
       evidence,
@@ -334,16 +384,19 @@ export function verifyTechnicalTalentCandidate(
   const employment =
     categoryScore(
       employmentEvidence,
+      evidenceAssessments,
     );
 
   const technical =
     categoryScore(
       technicalEvidence,
+      evidenceAssessments,
     );
 
   const research =
     categoryScore(
       researchEvidence,
+      evidenceAssessments,
     );
 
   const sourceIndependence =
@@ -420,6 +473,8 @@ export function verifyTechnicalTalentCandidate(
 
   return {
     status,
+
+    evidenceAssessments,
 
     score,
 

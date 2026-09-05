@@ -626,9 +626,7 @@ function normalizeAuthor(
         paper.citationCount,
       ),
 
-    supports: [
-      "Research Activity",
-    ],
+    supports: [],
 
     relevance:
       "Citation activity provides an additional research-impact signal.",

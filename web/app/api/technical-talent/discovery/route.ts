@@ -31,6 +31,7 @@ const VALID_SOURCES: DiscoverySource[] = [
   "GitHub",
   "OpenReview",
   "Semantic Scholar",
+  "OpenAlex",
 ];
 
 interface DiscoveryApiRequest {
@@ -40,11 +41,18 @@ interface DiscoveryApiRequest {
   technologies?: string[];
   researchAreas?: string[];
   roleFamilies?: string[];
+  repositories?: string[];
+  publications?: string[];
   minimumFitScore?: number;
   minimumConfidence?: DiscoveryConfidence;
   sources?: DiscoverySource[];
   limit?: number;
   offset?: number;
+
+  /**
+   * Opt into evidence-first source planning and execution.
+   */
+  evidenceFirst?: boolean;
 }
 
 function cleanStrings(
@@ -241,6 +249,16 @@ export async function POST(
         body?.roleFamilies,
       );
 
+    const repositories =
+      cleanStrings(
+        body?.repositories,
+      );
+
+    const publications =
+      cleanStrings(
+        body?.publications,
+      );
+
     const minimumFitScore =
       typeof body?.minimumFitScore === "number" &&
       Number.isFinite(body.minimumFitScore)
@@ -268,6 +286,9 @@ export async function POST(
         body?.offset,
       );
 
+      const evidenceFirst =
+        body?.evidenceFirst === true;
+
     const query:
       TechnicalTalentDiscoveryQuery = {
       keywords,
@@ -276,6 +297,8 @@ export async function POST(
       technologies,
       researchAreas,
       roleFamilies,
+      repositories,
+      publications,
       minimumFitScore,
       minimumConfidence,
     };
@@ -289,6 +312,7 @@ export async function POST(
           sources,
           limit,
           offset,
+          evidenceFirst,
         },
       );
 

@@ -19,6 +19,10 @@ import {
   openReviewTechnicalTalentSource,
 } from "@/lib/technicalTalent/sources/research/OpenReviewTechnicalTalentSource";
 
+import {
+  openAlexTechnicalTalentSource,
+} from "@/lib/technicalTalent/sources/research/OpenAlexTechnicalTalentSource";
+
 
 import {
   arxivTechnicalTalentSource,
@@ -49,6 +53,10 @@ export function initializeTechnicalTalentSources(): void {
 
   technicalTalentSourceRegistry.register(
     openReviewTechnicalTalentSource,
+  );
+
+  technicalTalentSourceRegistry.register(
+    openAlexTechnicalTalentSource,
   );
 
 

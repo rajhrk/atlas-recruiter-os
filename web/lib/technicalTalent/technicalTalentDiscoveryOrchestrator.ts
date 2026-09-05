@@ -63,6 +63,14 @@ import type {
   TechnicalTalentSourceQuery,
 } from "@/types/technicalTalentDiscoverySource";
 
+import {
+  planEvidenceFirstDiscovery,
+} from "@/lib/technicalTalent/technicalTalentEvidenceFirstDiscovery";
+
+import {
+  executeEvidenceFirstDiscovery,
+} from "@/lib/technicalTalent/technicalTalentEvidenceFirstDiscoveryExecutor";
+
 /**
  * A single source execution result.
  */
@@ -143,6 +151,14 @@ export interface TechnicalTalentOrchestrationOptions {
    * Number of records to skip after deduplication.
    */
   offset?: number;
+
+  /**
+   * Use evidence-first source planning and execution.
+   *
+   * Opt-in during v1. Legacy parallel source execution
+   * remains the default.
+   */
+  evidenceFirst?: boolean;
 }
 
 /**
@@ -180,6 +196,210 @@ function getRecordIdentity(
       .join("|")
       .toLowerCase()
   );
+}
+
+/**
+ * Extract explicit ORCID identities from a normalized
+ * discovery record.
+ *
+ * ORCID is treated as a hard person-level identity boundary.
+ * This helper intentionally mirrors the evidence contract
+ * rather than depending on resolver internals.
+ */
+function getRecordOrcidIds(
+  record: TechnicalTalentDiscoveryRecord,
+): string[] {
+  return Array.from(
+    new Set(
+      record.evidence
+        .map((evidence) => {
+          const match =
+            evidence.id.match(
+              /(?:^|:)orcid:(.+)$/i,
+            );
+
+          return match?.[1];
+        })
+        .filter(
+          (
+            value,
+          ): value is string =>
+            Boolean(value),
+        )
+        .map((value) =>
+          value
+            .trim()
+            .toLowerCase()
+            .replace(/^https?:\/\/(?:www\.)?orcid\.org\//, "")
+            .replace(/[^a-z0-9]/g, ""),
+        )
+        .filter(Boolean),
+    ),
+  );
+}
+
+/**
+ * Prevent an identity cluster from acquiring conflicting
+ * explicit ORCID identities.
+ *
+ * This is a cluster-level invariant, not merely a pairwise
+ * identity rule. It protects against transitive merges:
+ *
+ * A + B -> merge
+ * (A+B) + C -> blocked when C has a conflicting ORCID.
+ */
+function hasClusterOrcidConflict(
+  existing: TechnicalTalentDiscoveryRecord,
+  incoming: TechnicalTalentDiscoveryRecord,
+): boolean {
+  const existingOrcids =
+    getRecordOrcidIds(existing);
+
+  const incomingOrcids =
+    getRecordOrcidIds(incoming);
+
+  if (
+    existingOrcids.length === 0 ||
+    incomingOrcids.length === 0
+  ) {
+    return false;
+  }
+
+  return !incomingOrcids.some(
+    (orcid) =>
+      existingOrcids.includes(orcid),
+  );
+}
+
+/**
+ * Prevent an identity cluster from acquiring a new
+ * person-level identity from a source that is already
+ * represented by multiple identities in the cluster.
+ *
+ * A shared ORCID can legitimately bridge two source
+ * identities, but it must not make an already-expanded
+ * cluster absorb an additional same-source identity.
+ *
+ * Example:
+ *
+ *   Cluster:
+ *     OpenAlex A + OpenAlex B + ORCID X
+ *
+ *   Incoming:
+ *     OpenAlex C + ORCID X
+ *
+ *   -> blocked
+ *
+ * A direct two-record ORCID bridge remains handled by
+ * resolveTechnicalTalentIdentity().
+ */
+function hasClusterSameSourceIdentityConflict(
+  existing: TechnicalTalentDiscoveryRecord,
+  incoming: TechnicalTalentDiscoveryRecord,
+): boolean {
+  const getSourceIdentities =
+    (
+      record: TechnicalTalentDiscoveryRecord,
+    ): Map<string, Set<string>> => {
+      const result =
+        new Map<string, Set<string>>();
+
+      const ids = [
+        record.id,
+        ...(record.sourceRecordIds ?? []),
+      ];
+
+      for (const id of ids) {
+        let source:
+          | "github"
+          | "openalex"
+          | undefined;
+
+        if (
+          id.startsWith("github:")
+        ) {
+          source = "github";
+        } else if (
+          id.startsWith("openalex:")
+        ) {
+          source = "openalex";
+        }
+
+        if (!source) {
+          continue;
+        }
+
+        const identities =
+          result.get(source) ??
+          new Set<string>();
+
+        identities.add(id);
+
+        result.set(
+          source,
+          identities,
+        );
+      }
+
+      return result;
+    };
+
+  const existingIdentities =
+    getSourceIdentities(
+      existing,
+    );
+
+  const incomingIdentities =
+    getSourceIdentities(
+      incoming,
+    );
+
+  for (
+    const [
+      source,
+      incomingSourceIdentities,
+    ] of incomingIdentities
+  ) {
+    const existingSourceIdentities =
+      existingIdentities.get(
+        source,
+      );
+
+    if (
+      !existingSourceIdentities ||
+      existingSourceIdentities.size === 0
+    ) {
+      continue;
+    }
+
+    const hasNewIdentity =
+      Array.from(
+        incomingSourceIdentities,
+      ).some(
+        (identity) =>
+          !existingSourceIdentities.has(
+            identity,
+          ),
+      );
+
+    if (!hasNewIdentity) {
+      continue;
+    }
+
+    /*
+     * Once a cluster contains more than one
+     * identity from the same source, do not allow
+     * another identity from that source to enter
+     * through a transitive ORCID match.
+     */
+    if (
+      existingSourceIdentities.size > 1
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -681,7 +901,7 @@ interface TechnicalTalentIdentityReviewPair {
   reasons: DiscoveryMatchReason[];
 }
 
-function resolveCrossSourceIdentities(
+export function resolveCrossSourceIdentities(
   records: TechnicalTalentDiscoveryRecord[],
 ): {
   records: TechnicalTalentDiscoveryRecord[];
@@ -720,6 +940,41 @@ function resolveCrossSourceIdentities(
       const existing =
         resolved[index];
 
+      /*
+       * Cluster-level ORCID boundary.
+       *
+       * The identity resolver already protects pairwise
+       * comparisons, but `existing` may represent a cluster
+       * created by an earlier merge. Never allow that cluster
+       * to absorb a record carrying a conflicting explicit
+       * ORCID.
+       */
+      if (
+        hasClusterOrcidConflict(
+          existing,
+          mergedRecord,
+        )
+      ) {
+        continue;
+      }
+
+      /*
+       * Cluster-level same-source identity boundary.
+       *
+       * A shared ORCID may bridge two direct source
+       * identities, but it must not allow an already-expanded
+       * cluster to absorb another person-level identity from
+       * the same source.
+       */
+      if (
+        hasClusterSameSourceIdentityConflict(
+          existing,
+          mergedRecord,
+        )
+      ) {
+        continue;
+      }
+
       const identityMatch =
         resolveTechnicalTalentIdentity(
           existing,
@@ -729,24 +984,6 @@ function resolveCrossSourceIdentities(
       if (
         identityMatch.shouldMerge
       ) {
-        console.log(
-          "[IDENTITY MERGE]",
-          JSON.stringify(
-            {
-              name: existing.name,
-              left: existing.sourceRecordIds,
-              right: mergedRecord.sourceRecordIds,
-              score: identityMatch.score,
-              confidence: identityMatch.confidence,
-              shouldMerge: identityMatch.shouldMerge,
-              requiresReview: identityMatch.requiresReview,
-              reasons: identityMatch.reasons,
-            },
-            null,
-            2,
-          ),
-        );
-
         unresolvedDuplicateIds.delete(
           existing.id,
         );
@@ -900,16 +1137,43 @@ export async function orchestrateTechnicalTalentDiscovery(
         adapter.config.source,
     );
 
-  const executions =
-    await Promise.all(
-      adapters.map(
-        (adapter) =>
-          executeSource(
-            adapter,
-            query,
-          ),
-      ),
-    );
+  let executions: TechnicalTalentSourceExecution[];
+
+  if (options.evidenceFirst) {
+    const evidenceFirstPlan =
+      planEvidenceFirstDiscovery(
+        query,
+        adapters,
+      );
+
+    const evidenceFirstExecutions =
+      await executeEvidenceFirstDiscovery(
+        query,
+        evidenceFirstPlan.objectives,
+        adapters,
+      );
+
+    executions =
+      evidenceFirstExecutions.map(
+        (execution) => ({
+          source: execution.source,
+          result: execution.result,
+          error: execution.error,
+          durationMs: execution.durationMs,
+        }),
+      );
+  } else {
+    executions =
+      await Promise.all(
+        adapters.map(
+          (adapter) =>
+            executeSource(
+              adapter,
+              query,
+            ),
+        ),
+      );
+  }
 
   const exactDeduplicatedRecords =
     mergeSourceRecords(
@@ -1090,6 +1354,12 @@ const evidence =
     researchAreas:
       query.researchAreas,
 
+    repositories:
+      query.repositories,
+
+    publications:
+      query.publications,
+
     conferences:
       query.conferences,
   };
@@ -1138,6 +1408,8 @@ const evidence =
       ...(query.skills ?? []),
       ...(query.technologies ?? []),
       ...(query.researchAreas ?? []),
+      ...(query.repositories ?? []),
+      ...(query.publications ?? []),
       ...(query.conferences ?? []),
     ].length;
 
@@ -1171,7 +1443,7 @@ const evidence =
             ),
 
           graphEvidenceAvailable:
-            true,
+            requestedGraphSignalCount > 0,
 
           graphMatchRequestedSignalCount:
             requestedGraphSignalCount,

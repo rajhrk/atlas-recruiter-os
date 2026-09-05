@@ -65,6 +65,7 @@ export type DiscoverySource =
   | "DBLP"
   | "arXiv"
   | "Semantic Scholar"
+  | "OpenAlex"
   | "Papers with Code"
   | "IEEE"
   | "Conference Proceedings"
@@ -105,6 +106,78 @@ export type DiscoveryConfidence =
   | "High"
   | "Medium"
   | "Low";
+
+/**
+ * Strength of evidence after Atlas evaluates
+ * source quality and independent corroboration.
+ *
+ * This is distinct from the confidence assigned by
+ * an individual source.
+ */
+export type DiscoveryEvidenceStrength =
+  | "Very High"
+  | "High"
+  | "Medium"
+  | "Low"
+  | "Unverified";
+
+/**
+ * Cross-source verification state for a specific
+ * evidence-backed fact.
+ */
+export type DiscoveryEvidenceVerificationStatus =
+  | "Corroborated"
+  | "Single Source"
+  | "Conflicting"
+  | "Unsupported";
+
+/**
+ * Atlas assessment of how strongly a specific fact
+ * is supported across independent evidence sources.
+ */
+export interface DiscoveryEvidenceAssessment {
+  /**
+   * Normalized fact being assessed.
+   *
+   * Examples:
+   * - "pytorch"
+   * - "computer vision"
+   * - "robotics research"
+   */
+  fact: string;
+
+  /**
+   * Cross-source verification state.
+   */
+  status: DiscoveryEvidenceVerificationStatus;
+
+  /**
+   * Atlas evidence strength after evaluating
+   * source independence and corroboration.
+   */
+  strength: DiscoveryEvidenceStrength;
+
+  /**
+   * Number of distinct external sources supporting
+   * the fact.
+   */
+  independentSourceCount: number;
+
+  /**
+   * Sources that support the fact.
+   */
+  sources: DiscoverySource[];
+
+  /**
+   * Evidence items supporting the fact.
+   */
+  evidenceIds: string[];
+
+  /**
+   * Recruiter-facing explanation of the assessment.
+   */
+  explanation: string;
+}
 
 /**
  * A normalized technical skill.
@@ -176,6 +249,19 @@ export interface DiscoveryEvidence {
    * Optional recruiter-facing explanation.
    */
   relevance?: string;
+
+  /**
+   * Describes how this evidence relates to candidate discovery.
+   *
+   * "Discovery" means this evidence directly contributed to
+   * finding the candidate for the current query.
+   *
+   * "Profile" means this evidence enriches the candidate's
+   * broader technical or research history.
+   */
+  evidenceRole?:
+    | "Discovery"
+    | "Profile";
 }
 
 /**
@@ -388,6 +474,15 @@ export type DiscoveryVerificationStatus =
 
 export interface DiscoveryVerification {
   /**
+   * Fact-level cross-source evidence assessments.
+   *
+   * These explain which technical/research facts are
+   * independently corroborated versus supported by
+   * only a single source.
+   */
+  evidenceAssessments?: DiscoveryEvidenceAssessment[];
+
+  /**
    * Overall Atlas verification status.
    */
   status: DiscoveryVerificationStatus;
@@ -599,6 +694,10 @@ export interface TechnicalTalentDiscoveryQuery {
   technologies?: string[];
 
   researchAreas?: string[];
+
+  repositories?: string[];
+
+  publications?: string[];
 
   companies?: string[];
 

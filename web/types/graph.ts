@@ -16,12 +16,14 @@ export interface GraphNode {
   id: string;
   type: GraphNodeType;
   label: string;
+  evidenceIds?: string[];
 }
 
 export interface GraphEdge {
   from: string;
   to: string;
   relationship: string;
+  evidenceIds?: string[];
 }
 
 export interface AtlasGraph {

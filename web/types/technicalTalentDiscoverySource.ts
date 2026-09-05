@@ -96,6 +96,19 @@ export interface TechnicalTalentSourceQuery {
   requestedSource: DiscoverySource;
 
   requestedAt: string;
+
+  /**
+   * Optional evidence-first execution objective.
+   *
+   * The underlying discovery query remains unchanged.
+   * This metadata explains why the source was selected
+   * and which evidence Atlas is trying to discover.
+   */
+  evidenceObjectives?: Array<{
+    requirement: string;
+    evidenceSlot: string;
+    rationale: string;
+  }>;
 }
 
 /**
